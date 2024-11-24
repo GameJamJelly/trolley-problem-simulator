@@ -3479,7 +3479,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "trolly-problem-simulator"
+name = "trolley-problem-simulator"
 version = "0.1.0"
 dependencies = [
  "bevy",

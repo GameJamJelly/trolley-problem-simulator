@@ -1,3 +1,3 @@
-# Trolly Problem Simulator
+# Trolley Problem Simulator
 
 How questionable are your morals?
