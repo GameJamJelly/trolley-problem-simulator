@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-/// Embed a binary asset.
+/// Embeds a binary asset.
 macro_rules! insert_embedded_assets {
     ( $app:ident, $( $path:expr ),+ $(,)? ) => {{
         let embedded = $app
@@ -18,12 +18,17 @@ macro_rules! insert_embedded_assets {
     }};
 }
 
-/// Load an embedded asset.
+/// Loads an embedded asset.
 pub fn load_embedded_asset<A>(asset_server: &AssetServer, path: &str) -> Handle<A>
 where
     A: Asset,
 {
     asset_server.load(format!("embedded://{}", path))
+}
+
+/// Loads an embedded image asset.
+pub fn load_embedded_image(asset_server: &AssetServer, image_name: &str) -> Handle<Image> {
+    load_embedded_asset(asset_server, &format!("assets/images/{}.png", image_name))
 }
 
 /// Plugin to embed app assets.
