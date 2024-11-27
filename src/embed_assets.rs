@@ -42,6 +42,11 @@ impl Plugin for EmbeddedAssetPlugin {
             "../assets/images/tracks-pull.png",
             "../assets/images/lever-default.png",
             "../assets/images/lever-pull.png",
+            "../assets/images/hostage-1.png",
+            "../assets/images/hostage-5.png",
+            "../assets/images/trolley-front.png",
+            "../assets/images/trolley-turn.png",
+            "../assets/images/trolley-side.png",
         );
     }
 }

@@ -1,11 +1,14 @@
 //! Trolley problem scenario implementation.
 
+use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
+use crate::util::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use std::marker::PhantomData;
 use std::ops::Deref;
+use std::time::Duration;
 
 /// The track texture component.
 #[derive(Component)]
@@ -15,35 +18,111 @@ pub struct TrackTexture;
 #[derive(Component)]
 pub struct LeverPlayerTexture;
 
+/// The hostages on track A texture component.
+#[derive(Component)]
+pub struct HostagesTrackATexture;
+
+/// The hostages on track B texture component.
+#[derive(Component)]
+pub struct HostagesTrackBTexture;
+
+/// The trolley texture component.
+#[derive(Component)]
+pub struct TrolleyTexture;
+
+/// The scenario timer text component.
+#[derive(Component)]
+pub struct TimerText;
+
 /// A trolley problem scenario.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Scenario<TN, TS, LN, LS>
-where
-    TN: ?Sized + Resource + Deref<Target = Handle<Image>>,
-    TS: ?Sized + Resource + Deref<Target = Handle<Image>>,
-    LN: ?Sized + Resource + Deref<Target = Handle<Image>>,
-    LS: ?Sized + Resource + Deref<Target = Handle<Image>>,
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Scenario<
+    TracksNormal,
+    TracksSwitched,
+    LeverNormal,
+    LeverSwitched,
+    HostagesANormal,
+    HostagesBNormal,
+> where
+    TracksNormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    TracksSwitched: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    LeverNormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    LeverSwitched: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    HostagesANormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    HostagesBNormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
 {
     /// The scenario text.
     pub text: &'static str,
+    /// The duration of time, in seconds, which the player will have to decide.
+    pub duration: f32,
+    /// Pixel position (centered) of the hostages on track A.
+    pub hostages_track_a_pos: Vec2,
+    /// Pixel position (centered) of the hostages on track B.
+    pub hostages_track_b_pos: Vec2,
     /// Marker to use the generics.
-    pub marker: PhantomData<fn() -> (Box<TN>, Box<TS>, Box<LN>, Box<LS>)>,
+    pub marker: PhantomData<
+        fn() -> (
+            Box<TracksNormal>,
+            Box<TracksSwitched>,
+            Box<LeverNormal>,
+            Box<LeverSwitched>,
+            Box<HostagesANormal>,
+            Box<HostagesBNormal>,
+        ),
+    >,
 }
 
-impl<TN, TS, LN, LS> Scenario<TN, TS, LN, LS>
+impl<
+        TracksNormal,
+        TracksSwitched,
+        LeverNormal,
+        LeverSwitched,
+        HostagesANormal,
+        HostagesBNormal,
+    >
+    Scenario<
+        TracksNormal,
+        TracksSwitched,
+        LeverNormal,
+        LeverSwitched,
+        HostagesANormal,
+        HostagesBNormal,
+    >
 where
-    TN: ?Sized + Resource + Deref<Target = Handle<Image>>,
-    TS: ?Sized + Resource + Deref<Target = Handle<Image>>,
-    LN: ?Sized + Resource + Deref<Target = Handle<Image>>,
-    LS: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    TracksNormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    TracksSwitched: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    LeverNormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    LeverSwitched: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    HostagesANormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
+    HostagesBNormal: ?Sized + Resource + Deref<Target = Handle<Image>>,
 {
     /// Returns a function that, when called, will set up the scenario.
     pub const fn setup_fn(
         &self,
-    ) -> impl FnMut(Commands, Res<TN>, Res<LN>) + use<'_, TN, TS, LN, LS> {
+    ) -> impl FnMut(
+        Commands,
+        Res<TracksNormal>,
+        Res<LeverNormal>,
+        Res<HostagesANormal>,
+        Res<HostagesBNormal>,
+        Res<TrolleyFrontRes>,
+    ) + use<
+        '_,
+        TracksNormal,
+        TracksSwitched,
+        LeverNormal,
+        LeverSwitched,
+        HostagesANormal,
+        HostagesBNormal,
+    > {
         move |mut commands: Commands,
-              tracks_normal_texture: Res<TN>,
-              lever_player_normal_texture: Res<LN>| {
+              tracks_normal_texture: Res<TracksNormal>,
+              lever_player_normal_texture: Res<LeverNormal>,
+              hostages_track_a_normal_texture: Res<HostagesANormal>,
+              hostages_track_b_normal_texture: Res<HostagesBNormal>,
+              trolley_front_texture: Res<TrolleyFrontRes>| {
+            let duration = Duration::from_secs_f32(self.duration);
+
             // Spawn the track texture
             let track_entity = commands
                 .spawn((
@@ -66,19 +145,59 @@ where
                 ))
                 .id();
 
+            // Spawn the texture for the hostages on track A
+            let hostages_track_a_entity = commands
+                .spawn((
+                    SpriteBundle {
+                        texture: hostages_track_a_normal_texture.clone(),
+                        transform: Transform::from_translation(normalize_translation_to_canvas(
+                            self.hostages_track_a_pos,
+                        )),
+                        ..default()
+                    },
+                    HostagesTrackATexture,
+                ))
+                .id();
+
+            // Spawn the texture for the hostages on track B
+            let hostages_track_b_entity = commands
+                .spawn((
+                    SpriteBundle {
+                        texture: hostages_track_b_normal_texture.clone(),
+                        transform: Transform::from_translation(normalize_translation_to_canvas(
+                            self.hostages_track_b_pos,
+                        )),
+                        ..default()
+                    },
+                    HostagesTrackBTexture,
+                ))
+                .id();
+
+            // Spawn the trolley texture
+            let trolley_entity = commands
+                .spawn((
+                    SpriteBundle {
+                        texture: trolley_front_texture.clone(),
+                        transform: horizon_distance_transform(
+                            APPROACHING_TROLLEY_HORIZON_POINT,
+                            APPROACHING_TROLLEY_END_TRANSFORM,
+                            duration,
+                        ),
+                        ..default()
+                    },
+                    TrolleyTexture,
+                ))
+                .id();
+
             // Spawn the scenario text
-            let text_entity = commands
+            let scenario_text_entity = commands
                 .spawn(NodeBundle {
                     style: Style {
-                        padding: UiRect::all(Val::Px(32.0)),
+                        padding: UiRect::all(Val::Px(24.0)),
                         position_type: PositionType::Absolute,
                         bottom: Val::Px(0.0),
                         left: Val::Px(0.0),
                         width: Val::Vw(100.0),
-                        height: Val::Vh(25.0),
-                        flex_direction: FlexDirection::Column,
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::FlexEnd,
                         ..default()
                     },
                     ..default()
@@ -98,13 +217,87 @@ where
                 })
                 .id();
 
+            // Spawn the timer text
+            let timer_text_entity = commands
+                .spawn(NodeBundle {
+                    style: Style {
+                        padding: UiRect::all(Val::Px(8.0)),
+                        position_type: PositionType::Absolute,
+                        top: Val::Px(0.0),
+                        right: Val::Px(0.0),
+                        ..default()
+                    },
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((
+                        TextBundle::from_section(
+                            format_timer_text(duration),
+                            TextStyle {
+                                font_size: 24.0,
+                                color: Color::BLACK,
+                                ..default()
+                            },
+                        )
+                        .with_text_justify(JustifyText::Right),
+                        TimerText,
+                    ));
+                })
+                .id();
+
             // Insert a resource containing all entities spawned so we can
             // remove them later
             commands.insert_resource(ScenarioEntitiesRes(vec![
                 track_entity,
                 lever_player_entity,
-                text_entity,
+                hostages_track_a_entity,
+                hostages_track_b_entity,
+                trolley_entity,
+                scenario_text_entity,
+                timer_text_entity,
             ]));
+
+            // Insert the timer resource
+            commands.insert_resource(ScenarioTimer(Timer::from_seconds(
+                self.duration,
+                TimerMode::Once,
+            )));
+        }
+    }
+
+    /// Returns a function that, when called, will update the scenario every
+    /// game tick.
+    pub const fn update_fn(
+        &self,
+    ) -> impl FnMut(
+        Res<Time>,
+        ResMut<ScenarioTimer>,
+        Query<&mut Text, With<TimerText>>,
+        Query<&mut Transform, With<TrolleyTexture>>,
+    ) {
+        move |time: Res<Time>,
+              mut timer: ResMut<ScenarioTimer>,
+              mut timer_text: Query<&mut Text, With<TimerText>>,
+              mut trolley_transform: Query<&mut Transform, With<TrolleyTexture>>| {
+            // Advance the state of the timer, checking if time just ran out
+            if timer.tick(time.delta()).just_finished() {
+                // TODO: determine which way the trolley goes here
+                println!("time's up!");
+            }
+
+            // Update the timer text
+            timer_text.single_mut().sections[0].value =
+                format_timer_text(timer.remaining().max(Duration::from_secs(0)));
+
+            // Update the trolley transform
+            if timer.remaining_secs() > 3.0 {
+                let new_transform = horizon_distance_transform(
+                    APPROACHING_TROLLEY_HORIZON_POINT,
+                    APPROACHING_TROLLEY_END_TRANSFORM,
+                    timer.remaining() - Duration::from_secs(3),
+                );
+                *trolley_transform.single_mut() = new_transform;
+            }
         }
     }
 
@@ -119,10 +312,10 @@ where
             Query<&mut Handle<Image>, With<TrackTexture>>,
             Query<&mut Handle<Image>, With<LeverPlayerTexture>>,
         )>,
-        Res<TN>,
-        Res<TS>,
-        Res<LN>,
-        Res<LS>,
+        Res<TracksNormal>,
+        Res<TracksSwitched>,
+        Res<LeverNormal>,
+        Res<LeverSwitched>,
     ) {
         move |windows: Query<&Window, With<PrimaryWindow>>,
               lever_state: Res<State<LeverState>>,
@@ -131,10 +324,10 @@ where
             Query<&mut Handle<Image>, With<TrackTexture>>,
             Query<&mut Handle<Image>, With<LeverPlayerTexture>>,
         )>,
-              tracks_normal_texture: Res<TN>,
-              tracks_switched_texture: Res<TS>,
-              lever_player_normal_texture: Res<LN>,
-              lever_player_switched_texture: Res<LS>| {
+              tracks_normal_texture: Res<TracksNormal>,
+              tracks_switched_texture: Res<TracksSwitched>,
+              lever_player_normal_texture: Res<LeverNormal>,
+              lever_player_switched_texture: Res<LeverSwitched>| {
             let lever_rect = Rect::new(346.0, 135.0, 410.0, 202.0);
 
             if let Some(mouse_pos) = windows.single().cursor_position() {
@@ -167,6 +360,9 @@ where
 
             // Remove the entities resource
             commands.remove_resource::<ScenarioEntitiesRes>();
+
+            // Remove the scenario timer
+            commands.remove_resource::<ScenarioTimer>();
         }
     }
 }

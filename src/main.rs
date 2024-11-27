@@ -15,6 +15,7 @@ mod menu;
 mod resources;
 mod scenario;
 mod states;
+mod util;
 
 use crate::game::*;
 use bevy::prelude::*;

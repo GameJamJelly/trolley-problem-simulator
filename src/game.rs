@@ -1,5 +1,6 @@
 //! Top-level game logic.
 
+use crate::constants::*;
 use crate::embed_assets::*;
 use crate::end_screen::*;
 use crate::menu::*;
@@ -12,8 +13,11 @@ use bevy::window::WindowResolution;
 use std::marker::PhantomData;
 
 /// Scenario #1
-const SCENARIO1: Scenario<TracksNormalRes, TracksSwitchedRes, LeverPlayerNormalRes, LeverPlayerSwitchedRes> = Scenario {
+const SCENARIO1: Scenario<TracksNormalRes, TracksSwitchedRes, LeverPlayerNormalRes, LeverPlayerSwitchedRes, Hostage5Res, Hostage1Res> = Scenario {
     text: "A trolley is headed towards a group of five people. You can intervene and pull the lever to switch the tracks so that only one person will be killed. Do you pull the lever?",
+    duration: 20.0,
+    hostages_track_a_pos: Vec2::new(530.0, 325.0),
+    hostages_track_b_pos: Vec2::new(550.0, 230.0),
     marker: PhantomData,
 };
 
@@ -35,6 +39,20 @@ fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(LeverPlayerSwitchedRes(load_embedded_image(
         &asset_server,
         "lever-pull",
+    )));
+    commands.insert_resource(Hostage1Res(load_embedded_image(&asset_server, "hostage-1")));
+    commands.insert_resource(Hostage5Res(load_embedded_image(&asset_server, "hostage-5")));
+    commands.insert_resource(TrolleyFrontRes(load_embedded_image(
+        &asset_server,
+        "trolley-front",
+    )));
+    commands.insert_resource(TrolleyTurnRes(load_embedded_image(
+        &asset_server,
+        "trolley-turn",
+    )));
+    commands.insert_resource(TrolleySideRes(load_embedded_image(
+        &asset_server,
+        "trolley-side",
     )));
 
     // UI camera
@@ -84,9 +102,13 @@ macro_rules! add_scenarios {
             $app.add_systems(OnEnter(PlayingState(Some($index))), $first.setup_fn())
                 .add_systems(
                     Update,
-                    $first.handle_click_fn().run_if(
-                        in_state(PlayingState(Some($index))).and_then(input_just_pressed(MouseButton::Left)),
-                    ),
+                    (
+                        $first.update_fn()
+                            .run_if(in_state(PlayingState(Some($index)))),
+                        $first.handle_click_fn()
+                            .run_if(in_state(PlayingState(Some($index)))
+                            .and_then(input_just_pressed(MouseButton::Left))),
+                    )
                 )
                 .add_systems(OnExit(PlayingState(Some($index))), $first.cleanup_fn());
         }
@@ -109,7 +131,7 @@ impl Plugin for GamePlugin {
             DefaultPlugins.set(WindowPlugin {
                 primary_window: Some(Window {
                     canvas: Some("#game-canvas".to_owned()),
-                    resolution: WindowResolution::new(800.0, 600.0),
+                    resolution: WindowResolution::new(SCREEN_WIDTH, SCREEN_HEIGHT),
                     ..default()
                 }),
                 ..default()
