@@ -2,7 +2,6 @@
 
 use crate::resources::*;
 use bevy::prelude::*;
-use std::path::Path;
 
 /// Embeds a binary asset.
 macro_rules! insert_embedded_assets {
@@ -39,6 +38,7 @@ pub fn load_embedded_image(asset_server: &AssetServer, image_name: &str) -> Hand
     load_embedded_asset(asset_server, &format!("assets/images/{}.png", image_name))
 }
 
+/// Sets up asset mapping resources.
 fn setup_asset_maps(
     mut commands: Commands,
     asset_server: Res<AssetServer>,

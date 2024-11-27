@@ -7,32 +7,12 @@ use crate::menu::*;
 use crate::resources::*;
 use crate::scenario::*;
 use crate::states::*;
-use bevy::input::common_conditions::*;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
-use std::marker::PhantomData;
 
 /// Loads game assets and stores them as resources.
 fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // // Store assets as resources
-    // commands.insert_resource(TracksNormalRes(load_embedded_image(
-    //     &asset_server,
-    //     "tracks-straight",
-    // )));
-    // commands.insert_resource(TracksSwitchedRes(load_embedded_image(
-    //     &asset_server,
-    //     "tracks-pull",
-    // )));
-    // commands.insert_resource(LeverPlayerNormalRes(load_embedded_image(
-    //     &asset_server,
-    //     "lever-default",
-    // )));
-    // commands.insert_resource(LeverPlayerSwitchedRes(load_embedded_image(
-    //     &asset_server,
-    //     "lever-pull",
-    // )));
-    // commands.insert_resource(Hostage1Res(load_embedded_image(&asset_server, "hostage-1")));
-    // commands.insert_resource(Hostage5Res(load_embedded_image(&asset_server, "hostage-5")));
+    // Store assets as resources
     commands.insert_resource(TrolleyFrontRes(load_embedded_image(
         &asset_server,
         "trolley-front",
@@ -73,43 +53,6 @@ fn detect_scenario_change(
         next_playing_state.set(PlayingState(Some(playing_state.unwrap() + 1)));
         next_lever_state.set(LeverState::Normal);
     }
-}
-
-/// Immediately sets the game state to [`GameState::EndScreen`].
-fn goto_end(mut next_game_state: ResMut<NextState<GameState>>) {
-    next_game_state.set(GameState::EndScreen);
-}
-
-/// Adds scenarios to the app.
-macro_rules! add_scenarios {
-    ( @indexed $index:expr, $app:expr, ) => {
-        {
-            $app.add_systems(OnEnter(PlayingState(Some($index))), goto_end);
-        }
-    };
-
-    ( @indexed $index:expr, $app:expr, $first:expr, $( $rest:expr, )* ) => {
-        {
-            $app.add_systems(OnEnter(PlayingState(Some($index))), $first.setup_fn())
-                .add_systems(
-                    Update,
-                    (
-                        $first.update_fn()
-                            .run_if(in_state(PlayingState(Some($index)))),
-                        $first.handle_click_fn()
-                            .run_if(in_state(PlayingState(Some($index)))
-                            .and_then(input_just_pressed(MouseButton::Left))),
-                    )
-                )
-                .add_systems(OnExit(PlayingState(Some($index))), $first.cleanup_fn());
-        }
-
-        add_scenarios!( @indexed $index + 1usize, $app, $( $rest, )* )
-    };
-
-    ( $app:expr, $( $scenario:expr ),+ $(,)? ) => {
-        add_scenarios!( @indexed 0usize, $app, $( $scenario, )+ )
-    };
 }
 
 /// The plugin which orchestrates the game logic.
@@ -155,9 +98,6 @@ impl Plugin for GamePlugin {
         );
         app.add_systems(OnExit(GameState::Playing), unset_playing_state);
 
-        // // Add scenario systems
-        // add_scenarios!(app, SCENARIO1);
-
         // Add end screen systems
         app.add_systems(OnEnter(GameState::EndScreen), setup_end_screen);
         app.add_systems(
@@ -165,14 +105,6 @@ impl Plugin for GamePlugin {
             update_end_screen.run_if(in_state(GameState::EndScreen)),
         );
         app.add_systems(OnExit(GameState::EndScreen), cleanup_end_screen);
-
-        // let scenario1: Scenario<TracksNormalRes, TracksSwitchedRes, LeverPlayerNormalRes, LeverPlayerSwitchedRes, Hostage5Res, Hostage1Res> = Scenario {
-        //     text: "A trolley is headed towards a group of five people. You can intervene and pull the lever to switch the tracks so that only one person will be killed. Do you pull the lever?".to_owned(),
-        //     duration: 20.0,
-        //     hostages_track_a_pos: Vec2::new(530.0, 325.0),
-        //     hostages_track_b_pos: Vec2::new(550.0, 230.0),
-        //     marker: PhantomData,
-        // };
 
         // Add scenarios
         app.add_plugins(

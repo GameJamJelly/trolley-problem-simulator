@@ -3,19 +3,25 @@
 use bevy::prelude::*;
 use std::collections::HashMap;
 
+/// Lists of loaded asset paths.
 #[derive(Resource)]
 pub struct AssetMapPaths {
+    /// List of image asset paths.
     pub image_asset_paths: Vec<String>,
 }
 
+/// A map of image asset paths to their corresponding handles.
 #[derive(Resource, Deref, DerefMut)]
 pub struct ImageAssetMap(pub HashMap<String, Handle<Image>>);
 
 impl ImageAssetMap {
+    /// Gets an image asset by its full path.
     pub fn get_by_path(&self, path: &str) -> Handle<Image> {
         self.0.get(path).unwrap().clone()
     }
 
+    /// Gets an image asset by its name. This assumes that the image is in
+    /// `assets/images/` and is a PNG.
     pub fn get_by_name(&self, name: &str) -> Handle<Image> {
         self.get_by_path(&format!("assets/images/{}.png", name))
     }
@@ -23,15 +29,25 @@ impl ImageAssetMap {
 
 /// Scenario configuration.
 pub struct ScenarioConfig {
+    /// The scenario text.
     pub text: String,
+    /// The scenario duration.
     pub duration: f32,
+    /// The position of hostages on track A.
     pub hostages_track_a_pos: Vec2,
+    /// The position of hostages on track B.
     pub hostages_track_b_pos: Vec2,
+    /// The name of the normal track texture.
     pub tracks_normal_texture: String,
+    /// The name of the switched track texture.
     pub tracks_switched_texture: String,
+    /// The name of the normal lever/player texture.
     pub lever_normal_texture: String,
+    /// The name of the switched lever/player texture.
     pub lever_switched_texture: String,
+    /// The name of the track A hostages texture.
     pub hostages_track_a_normal_texture: String,
+    /// The name of the track B hostages texture.
     pub hostages_track_b_normal_texture: String,
 }
 
@@ -40,7 +56,8 @@ pub struct ScenarioConfig {
 pub struct ScenariosConfigRes(pub Vec<ScenarioConfig>);
 
 impl ScenariosConfigRes {
-    pub fn get(&self, scenario_index: usize) -> &ScenarioConfig {
+    /// Gets the requested scenario.
+    pub fn get_scenario(&self, scenario_index: usize) -> &ScenarioConfig {
         self.0.get(scenario_index).unwrap()
     }
 }
