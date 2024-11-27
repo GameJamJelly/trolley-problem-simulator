@@ -28,7 +28,17 @@ pub const HORIZON_SCALE_BASE: f32 = 1.1;
 /// The point on the horizon where the trolley approaches from.
 pub const APPROACHING_TROLLEY_HORIZON_POINT: Vec2 = Vec2::new(43.0, 61.0);
 
-/// The final state of the approaching trolley transform.
-pub const APPROACHING_TROLLEY_END_TRANSFORM: Transform = Transform::IDENTITY
+/// The final state of the approaching trolley horizon transform.
+pub const APPROACHING_TROLLEY_HORIZON_END_TRANSFORM: Transform = Transform::IDENTITY
     .with_translation(Vec3::new(50.0, 135.0, 0.0))
     .with_scale(Vec3::new(0.8, 0.8, 1.0));
+
+/// The final state of the approaching trolley turn transform.
+pub const APPROACHING_TROLLEY_TURNING_END_TRANSFORM: Transform = Transform::IDENTITY
+    .with_translation(Vec3::new(112.0, 171.0, 0.0))
+    .with_scale(Vec3::new(0.85, 0.85, 1.0));
+
+/// The final state of the approaching trolley side transform.
+pub const APPROACHING_TROLLEY_SIDE_END_TRANSFORM: Transform = Transform::IDENTITY
+    .with_translation(Vec3::new(298.0, 229.0, 0.0))
+    .with_scale(Vec3::new(1.0, 1.0, 1.0));

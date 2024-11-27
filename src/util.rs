@@ -19,6 +19,35 @@ pub const fn normalize_translation_to_canvas(point: Vec2) -> Vec3 {
     )
 }
 
+/// Calculates the linear transform to perform on an object moving on the
+/// screen.
+pub fn movement_transform(
+    start_transform: Transform,
+    end_transform: Transform,
+    duration: Duration,
+    time_remaining: Duration,
+) -> Transform {
+    let start_point_x = start_transform.translation.x;
+    let start_point_y = start_transform.translation.y;
+    let start_scale = start_transform.scale.x;
+    let end_point_x = end_transform.translation.x;
+    let end_point_y = end_transform.translation.y;
+    let end_scale = end_transform.scale.x;
+
+    let amount = 1.0 - (time_remaining.as_secs_f32() / duration.as_secs_f32());
+
+    let transformed_x = point_between(start_point_x, end_point_x, amount);
+    let transformed_y = point_between(start_point_y, end_point_y, amount);
+    let transformed_scale = point_between(start_scale, end_scale, amount);
+
+    Transform::IDENTITY
+        .with_translation(normalize_translation_to_canvas(Vec2::new(
+            transformed_x,
+            transformed_y,
+        )))
+        .with_scale(Vec3::new(transformed_scale, transformed_scale, 1.0))
+}
+
 /// Calculates the transform to perform on an object on the horizon approaching
 /// a point on the screen.
 pub fn horizon_distance_transform(
@@ -61,4 +90,14 @@ pub fn horizon_distance_transform(
 pub fn format_timer_text(duration: Duration) -> String {
     let seconds = duration.as_secs_f32().ceil() as u64;
     format!("{}:{:0>2}", seconds / 60, seconds % 60)
+}
+
+/// Checks if the timer has just reached a target time.
+pub const fn time_remaining_reached(
+    previous_time_remaining: f32,
+    current_time_remaining: f32,
+    target_time_remaining: f32,
+) -> bool {
+    previous_time_remaining >= target_time_remaining
+        && target_time_remaining >= current_time_remaining
 }

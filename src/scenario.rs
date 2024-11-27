@@ -180,7 +180,7 @@ where
                         texture: trolley_front_texture.clone(),
                         transform: horizon_distance_transform(
                             APPROACHING_TROLLEY_HORIZON_POINT,
-                            APPROACHING_TROLLEY_END_TRANSFORM,
+                            APPROACHING_TROLLEY_HORIZON_END_TRANSFORM,
                             duration,
                         ),
                         ..default()
@@ -274,27 +274,63 @@ where
         ResMut<ScenarioTimer>,
         Query<&mut Text, With<TimerText>>,
         Query<&mut Transform, With<TrolleyTexture>>,
+        Query<&mut Handle<Image>, With<TrolleyTexture>>,
+        Res<TrolleyTurnRes>,
+        Res<TrolleySideRes>,
     ) {
         move |time: Res<Time>,
               mut timer: ResMut<ScenarioTimer>,
               mut timer_text: Query<&mut Text, With<TimerText>>,
-              mut trolley_transform: Query<&mut Transform, With<TrolleyTexture>>| {
+              mut trolley_transform: Query<&mut Transform, With<TrolleyTexture>>,
+              mut trolley_texture: Query<&mut Handle<Image>, With<TrolleyTexture>>,
+              trolley_turn_texture: Res<TrolleyTurnRes>,
+              trolley_side_texture: Res<TrolleySideRes>| {
+            let previous_time_remaining = timer.remaining_secs();
+
             // Advance the state of the timer, checking if time just ran out
             if timer.tick(time.delta()).just_finished() {
                 // TODO: determine which way the trolley goes here
                 println!("time's up!");
             }
 
+            let current_time_remaining = timer.remaining_secs();
+
             // Update the timer text
             timer_text.single_mut().sections[0].value =
                 format_timer_text(timer.remaining().max(Duration::from_secs(0)));
+
+            // Trigger the trolley to turn slightly
+            if time_remaining_reached(previous_time_remaining, current_time_remaining, 3.0) {
+                *trolley_texture.single_mut() = trolley_turn_texture.clone();
+            }
+
+            // Trigger the trolley to turn sideways
+            if time_remaining_reached(previous_time_remaining, current_time_remaining, 2.0) {
+                *trolley_texture.single_mut() = trolley_side_texture.clone();
+            }
 
             // Update the trolley transform
             if timer.remaining_secs() > 3.0 {
                 let new_transform = horizon_distance_transform(
                     APPROACHING_TROLLEY_HORIZON_POINT,
-                    APPROACHING_TROLLEY_END_TRANSFORM,
+                    APPROACHING_TROLLEY_HORIZON_END_TRANSFORM,
                     timer.remaining() - Duration::from_secs(3),
+                );
+                *trolley_transform.single_mut() = new_transform;
+            } else if timer.remaining_secs() > 2.0 {
+                let new_transform = movement_transform(
+                    APPROACHING_TROLLEY_HORIZON_END_TRANSFORM,
+                    APPROACHING_TROLLEY_TURNING_END_TRANSFORM,
+                    Duration::from_secs_f32(1.0),
+                    timer.remaining() - Duration::from_secs_f32(2.0),
+                );
+                *trolley_transform.single_mut() = new_transform;
+            } else if timer.remaining_secs() > 0.0 {
+                let new_transform = movement_transform(
+                    APPROACHING_TROLLEY_TURNING_END_TRANSFORM,
+                    APPROACHING_TROLLEY_SIDE_END_TRANSFORM,
+                    Duration::from_secs_f32(2.0),
+                    timer.remaining(),
                 );
                 *trolley_transform.single_mut() = new_transform;
             }
