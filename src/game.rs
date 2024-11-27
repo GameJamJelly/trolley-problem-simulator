@@ -1,7 +1,7 @@
 //! Top-level game logic.
 
+use crate::assets::*;
 use crate::constants::*;
-use crate::embed_assets::*;
 use crate::end_screen::*;
 use crate::menu::*;
 use crate::resources::*;
@@ -12,36 +12,27 @@ use bevy::prelude::*;
 use bevy::window::WindowResolution;
 use std::marker::PhantomData;
 
-/// Scenario #1
-const SCENARIO1: Scenario<TracksNormalRes, TracksSwitchedRes, LeverPlayerNormalRes, LeverPlayerSwitchedRes, Hostage5Res, Hostage1Res> = Scenario {
-    text: "A trolley is headed towards a group of five people. You can intervene and pull the lever to switch the tracks so that only one person will be killed. Do you pull the lever?",
-    duration: 20.0,
-    hostages_track_a_pos: Vec2::new(530.0, 325.0),
-    hostages_track_b_pos: Vec2::new(550.0, 230.0),
-    marker: PhantomData,
-};
-
 /// Loads game assets and stores them as resources.
 fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // Store assets as resources
-    commands.insert_resource(TracksNormalRes(load_embedded_image(
-        &asset_server,
-        "tracks-straight",
-    )));
-    commands.insert_resource(TracksSwitchedRes(load_embedded_image(
-        &asset_server,
-        "tracks-pull",
-    )));
-    commands.insert_resource(LeverPlayerNormalRes(load_embedded_image(
-        &asset_server,
-        "lever-default",
-    )));
-    commands.insert_resource(LeverPlayerSwitchedRes(load_embedded_image(
-        &asset_server,
-        "lever-pull",
-    )));
-    commands.insert_resource(Hostage1Res(load_embedded_image(&asset_server, "hostage-1")));
-    commands.insert_resource(Hostage5Res(load_embedded_image(&asset_server, "hostage-5")));
+    // // Store assets as resources
+    // commands.insert_resource(TracksNormalRes(load_embedded_image(
+    //     &asset_server,
+    //     "tracks-straight",
+    // )));
+    // commands.insert_resource(TracksSwitchedRes(load_embedded_image(
+    //     &asset_server,
+    //     "tracks-pull",
+    // )));
+    // commands.insert_resource(LeverPlayerNormalRes(load_embedded_image(
+    //     &asset_server,
+    //     "lever-default",
+    // )));
+    // commands.insert_resource(LeverPlayerSwitchedRes(load_embedded_image(
+    //     &asset_server,
+    //     "lever-pull",
+    // )));
+    // commands.insert_resource(Hostage1Res(load_embedded_image(&asset_server, "hostage-1")));
+    // commands.insert_resource(Hostage5Res(load_embedded_image(&asset_server, "hostage-5")));
     commands.insert_resource(TrolleyFrontRes(load_embedded_image(
         &asset_server,
         "trolley-front",
@@ -164,8 +155,8 @@ impl Plugin for GamePlugin {
         );
         app.add_systems(OnExit(GameState::Playing), unset_playing_state);
 
-        // Add scenario systems
-        add_scenarios!(app, SCENARIO1);
+        // // Add scenario systems
+        // add_scenarios!(app, SCENARIO1);
 
         // Add end screen systems
         app.add_systems(OnEnter(GameState::EndScreen), setup_end_screen);
@@ -174,5 +165,32 @@ impl Plugin for GamePlugin {
             update_end_screen.run_if(in_state(GameState::EndScreen)),
         );
         app.add_systems(OnExit(GameState::EndScreen), cleanup_end_screen);
+
+        // let scenario1: Scenario<TracksNormalRes, TracksSwitchedRes, LeverPlayerNormalRes, LeverPlayerSwitchedRes, Hostage5Res, Hostage1Res> = Scenario {
+        //     text: "A trolley is headed towards a group of five people. You can intervene and pull the lever to switch the tracks so that only one person will be killed. Do you pull the lever?".to_owned(),
+        //     duration: 20.0,
+        //     hostages_track_a_pos: Vec2::new(530.0, 325.0),
+        //     hostages_track_b_pos: Vec2::new(550.0, 230.0),
+        //     marker: PhantomData,
+        // };
+
+        // Add scenarios
+        app.add_plugins(
+            ScenarioCollectionPlugin::builder()
+                .scenario(
+                    Scenario::builder()
+                        .text("A trolley is headed towards a group of five people. You can intervene and pull the lever to switch the tracks so that only one person will be killed. Do you pull the lever?")
+                        .duration(20.0)
+                        .hostages_track_a_pos(Vec2::new(530.0, 325.0))
+                        .hostages_track_b_pos(Vec2::new(550.0, 230.0))
+                        .tracks_normal_texture("tracks-straight")
+                        .tracks_switched_texture("tracks-pull")
+                        .lever_normal_texture("lever-default")
+                        .lever_switched_texture("lever-pull")
+                        .hostages_track_a_normal_texture("hostage-5")
+                        .hostages_track_b_normal_texture("hostage-1")
+                        .build())
+                .build(),
+        );
     }
 }

@@ -7,8 +7,8 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
+mod assets;
 mod constants;
-mod embed_assets;
 mod end_screen;
 mod game;
 mod menu;
