@@ -6,9 +6,12 @@
 #![warn(clippy::missing_const_for_fn)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
+// TODO: remove later
+#![allow(dead_code)]
 
 mod animation;
 mod assets;
+mod components;
 mod constants;
 mod end_screen;
 mod game;

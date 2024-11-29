@@ -1,5 +1,6 @@
 //! Top-level game logic.
 
+use crate::animation::*;
 use crate::assets::*;
 use crate::constants::*;
 use crate::end_screen::*;
@@ -57,7 +58,8 @@ impl Plugin for GamePlugin {
         // Because the first two are chained, the user cannot possibly proceed
         // before all assets are loaded, since the "Play" button won't be shown
         // until then.
-        app.add_systems(Startup, (setup_game, setup_menu_screen).chain());
+        app.add_systems(Startup, setup_game);
+        app.add_systems(OnEnter(GameState::InMenu), setup_menu_screen);
         app.add_systems(
             Update,
             update_menu_screen.run_if(in_state(GameState::InMenu)),
@@ -87,6 +89,15 @@ impl Plugin for GamePlugin {
                         .lever_switched_texture("lever-pull")
                         .hostages_track_a_normal_texture("hostage-5")
                         .hostages_track_b_normal_texture("hostage-1")
+                        .animation(
+                            Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
+                                .on_lever_state(LeverState::Normal)
+                                .node(AnimationNode::new(6.0, Transform::from_translation(Vec3::new(900.0, 445.0, 0.0)))))
+                        .animation(
+                            Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
+                                .on_lever_state(LeverState::Pulled)
+                                .node(AnimationNode::new(1.0, Transform::from_translation(Vec3::new(400.0, 190.0, 0.0))))
+                                .node(AnimationNode::new(5.0, Transform::from_translation(Vec3::new(900.0, 250.0, 0.0)))))
                         .build())
                 .build(),
         );

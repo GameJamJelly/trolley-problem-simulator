@@ -14,7 +14,7 @@ pub enum GameState {
     EndScreen,
 }
 
-/// The state of the game being played.
+/// The index of the active scenario.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States, Deref, DerefMut)]
 pub struct ScenarioIndexState(pub Option<usize>);
 
@@ -40,6 +40,10 @@ pub enum AnimationState {
     Complete,
 }
 
-/// The state of a running animation.
+/// The index of the active animation.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States, Deref, DerefMut)]
 pub struct AnimationIndexState(pub Option<usize>);
+
+/// The index of the active animation node.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States, Deref, DerefMut)]
+pub struct AnimationNodeIndexState(pub Option<usize>);

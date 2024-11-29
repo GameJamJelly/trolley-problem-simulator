@@ -67,7 +67,7 @@ pub fn update_end_screen(
             }
             Interaction::Pressed => {
                 *color = PRESSED_BUTTON_COLOR.into();
-                next_game_state.set(GameState::Playing);
+                next_game_state.set(GameState::InMenu);
             }
         }
     }

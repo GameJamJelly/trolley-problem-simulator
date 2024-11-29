@@ -1,6 +1,7 @@
 //! Handles to application resources, such as images and sounds.
 
-use crate::animation::Animation;
+use crate::animation::AnimationFn;
+use crate::states::LeverState;
 use bevy::prelude::*;
 use std::collections::HashMap;
 
@@ -67,9 +68,31 @@ impl ScenariosConfigRes {
 #[derive(Resource, Deref, DerefMut)]
 pub struct ScenarioTimer(pub Timer);
 
+/// Animation node configuration.
+/// A single node in an animation. Construct this using the builder pattern.
+pub struct AnimationNodeConfig {
+    /// The duration in seconds of this section of the animation.
+    pub duration: f32,
+    /// The end transformation value.
+    pub transform: Transform,
+    /// The function to model this section of the animation transformation.
+    pub animation_fn: AnimationFn,
+}
+
+/// Animation configuration.
+pub struct AnimationConfig {
+    /// An optional lever-state-related condition to decide whether to run the
+    /// animation.
+    pub lever_state_condition: Option<LeverState>,
+    /// The animation start transformation.
+    pub start_transform: Transform,
+    /// The collection of animation nodes.
+    pub nodes: Vec<AnimationNodeConfig>,
+}
+
 /// Resource containing animation configuration for all scenarios.
 #[derive(Resource, Deref, DerefMut)]
-pub struct AnimationConfig(pub Vec<Vec<Animation>>);
+pub struct AnimationConfigRes(pub Vec<Vec<AnimationConfig>>);
 
 /// Resource containing the timer for a section of an animation.
 #[derive(Resource, Deref, DerefMut)]

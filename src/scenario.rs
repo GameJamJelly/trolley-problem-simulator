@@ -1,6 +1,7 @@
 //! Trolley problem scenario implementation.
 
 use crate::animation::*;
+use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
@@ -11,26 +12,6 @@ use bevy::window::PrimaryWindow;
 use std::sync::Mutex;
 use std::time::Duration;
 use typed_builder::TypedBuilder;
-
-/// The track texture component.
-#[derive(Component)]
-pub struct TrackTexture;
-
-/// The lever/player texture component.
-#[derive(Component)]
-pub struct LeverPlayerTexture;
-
-/// The hostages on track A texture component.
-#[derive(Component)]
-pub struct HostagesTrackATexture;
-
-/// The hostages on track B texture component.
-#[derive(Component)]
-pub struct HostagesTrackBTexture;
-
-/// The trolley texture component.
-#[derive(Component)]
-pub struct TrolleyTexture;
 
 /// The scenario timer text component.
 #[derive(Component)]
@@ -339,17 +320,19 @@ fn post_animation_wait(
     mut timer: ResMut<PostAnimationTimer>,
     scenario_index_state: Res<State<ScenarioIndexState>>,
     mut next_scenario_index_state: ResMut<NextState<ScenarioIndexState>>,
+    mut next_animation_state: ResMut<NextState<AnimationState>>,
 ) {
     if timer.tick(time.delta()).just_finished() {
         next_scenario_index_state.set(ScenarioIndexState(Some(
             scenario_index_state.0.unwrap() + 1,
         )));
+        next_animation_state.set(AnimationState::Waiting);
         commands.remove_resource::<PostAnimationTimer>();
     }
 }
 
 /// Immediately sets the game state to [`GameState::EndScreen`].
-fn goto_end(mut next_game_state: ResMut<NextState<GameState>>) {
+fn goto_end_scenario(mut next_game_state: ResMut<NextState<GameState>>) {
     next_game_state.set(GameState::EndScreen);
 }
 
@@ -357,7 +340,7 @@ fn goto_end(mut next_game_state: ResMut<NextState<GameState>>) {
 #[derive(TypedBuilder)]
 #[builder(mutators(
     /// Adds an animation to the scenario.
-    fn animation(&mut self, animation: Animation) {
+    pub fn animation(&mut self, animation: Animation) {
         self.animations.push(animation);
     }
 ))]
@@ -427,6 +410,7 @@ impl Plugin for ScenarioCollectionPlugin {
                             scenario_update.run_if(in_state(ScenarioIndexState(Some(index)))),
                             scenario_handle_click.run_if(
                                 in_state(ScenarioIndexState(Some(index)))
+                                    .and_then(in_state(AnimationState::Waiting))
                                     .and_then(input_just_pressed(MouseButton::Left)),
                             ),
                         ),
@@ -445,7 +429,10 @@ impl Plugin for ScenarioCollectionPlugin {
                     .add_systems(OnExit(ScenarioIndexState(Some(index))), scenario_cleanup);
             }
 
-            app.add_systems(OnEnter(ScenarioIndexState(Some(scenarios.len()))), goto_end);
+            app.add_systems(
+                OnEnter(ScenarioIndexState(Some(scenarios.len()))),
+                goto_end_scenario,
+            );
 
             let (scenario_config, animations) = scenarios
                 .into_iter()
