@@ -17,6 +17,10 @@ pub const HOVERED_BUTTON_COLOR: Color = Color::srgb(0.2, 0.2, 0.2);
 /// The color of a button when it is being pressed.
 pub const PRESSED_BUTTON_COLOR: Color = Color::srgb(0.3, 0.3, 0.3);
 
+/// The amount of time in seconds to wait after the trolley has finished its
+/// animation.
+pub const POST_ANIMATION_WAIT_TIME: f32 = 3.0;
+
 /// The exponential base by which to translate an object as it approaches from
 /// the horizon.
 pub const HORIZON_TRANSLATE_BASE: f32 = 1.25;

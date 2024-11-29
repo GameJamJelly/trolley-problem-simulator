@@ -1,5 +1,6 @@
 //! Handles to application resources, such as images and sounds.
 
+use crate::animation::Animation;
 use bevy::prelude::*;
 use std::collections::HashMap;
 
@@ -65,6 +66,18 @@ impl ScenariosConfigRes {
 /// Scenario timer resource.
 #[derive(Resource, Deref, DerefMut)]
 pub struct ScenarioTimer(pub Timer);
+
+/// Resource containing animation configuration for all scenarios.
+#[derive(Resource, Deref, DerefMut)]
+pub struct AnimationConfig(pub Vec<Vec<Animation>>);
+
+/// Resource containing the timer for a section of an animation.
+#[derive(Resource, Deref, DerefMut)]
+pub struct AnimationSectionTimer(pub Timer);
+
+/// Resource containing a timer to delay the end of the scenario.
+#[derive(Resource, Deref, DerefMut)]
+pub struct PostAnimationTimer(pub Timer);
 
 /// The resource containing the UI entity spawned for the menu screen.
 #[derive(Resource, Deref, DerefMut)]

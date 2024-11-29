@@ -30,31 +30,6 @@ fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2dBundle::default());
 }
 
-/// Sets the playing state once [`GameState::Playing`] is entered.
-fn set_playing_state(mut next_playing_state: ResMut<NextState<PlayingState>>) {
-    next_playing_state.set(PlayingState(Some(0)));
-}
-
-/// Unsets the playing state once [`GameState::Playing`] is exited.
-fn unset_playing_state(mut next_playing_state: ResMut<NextState<PlayingState>>) {
-    next_playing_state.set(PlayingState(None));
-}
-
-/// Detects when a scenario change is requested.
-fn detect_scenario_change(
-    scenario_change: Res<State<ScenarioChangeState>>,
-    mut next_scenario_change: ResMut<NextState<ScenarioChangeState>>,
-    playing_state: Res<State<PlayingState>>,
-    mut next_playing_state: ResMut<NextState<PlayingState>>,
-    mut next_lever_state: ResMut<NextState<LeverState>>,
-) {
-    if ***scenario_change {
-        next_scenario_change.set(ScenarioChangeState(false));
-        next_playing_state.set(PlayingState(Some(playing_state.unwrap() + 1)));
-        next_lever_state.set(LeverState::Normal);
-    }
-}
-
 /// The plugin which orchestrates the game logic.
 pub struct GamePlugin;
 
@@ -75,9 +50,8 @@ impl Plugin for GamePlugin {
 
         // Insert stateful values
         app.insert_state(GameState::InMenu)
-            .insert_state(PlayingState(None))
-            .insert_state(LeverState::Normal)
-            .insert_state(ScenarioChangeState(false));
+            .insert_state(ScenarioIndexState(None))
+            .insert_state(LeverState::Normal);
 
         // Add game setup and menu screen systems.
         // Because the first two are chained, the user cannot possibly proceed
@@ -89,14 +63,6 @@ impl Plugin for GamePlugin {
             update_menu_screen.run_if(in_state(GameState::InMenu)),
         );
         app.add_systems(OnExit(GameState::InMenu), cleanup_menu_screen);
-
-        // Add playing systems
-        app.add_systems(OnEnter(GameState::Playing), set_playing_state);
-        app.add_systems(
-            Update,
-            detect_scenario_change.run_if(in_state(GameState::Playing)),
-        );
-        app.add_systems(OnExit(GameState::Playing), unset_playing_state);
 
         // Add end screen systems
         app.add_systems(OnEnter(GameState::EndScreen), setup_end_screen);

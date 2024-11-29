@@ -1,5 +1,6 @@
 //! Trolley problem scenario implementation.
 
+use crate::animation::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
@@ -38,16 +39,12 @@ pub struct TimerText;
 /// Sets up a scenario.
 pub fn scenario_setup(
     mut commands: Commands,
-    // tracks_normal_texture: Res<TracksNormal>,
-    // lever_player_normal_texture: Res<LeverNormal>,
-    // hostages_track_a_normal_texture: Res<HostagesANormal>,
-    // hostages_track_b_normal_texture: Res<HostagesBNormal>,
     scenarios_config: Res<ScenariosConfigRes>,
-    playing_state: Res<State<PlayingState>>,
+    scenario_index_state: Res<State<ScenarioIndexState>>,
     image_assets: Res<ImageAssetMap>,
     trolley_front_texture: Res<TrolleyFrontRes>,
 ) {
-    let scenario_index = playing_state.0.unwrap();
+    let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
     let tracks_normal_texture = image_assets.get_by_name(&scenario.tracks_normal_texture);
     let lever_player_normal_texture = image_assets.get_by_name(&scenario.lever_normal_texture);
@@ -207,13 +204,13 @@ pub fn scenario_update(
     mut trolley_texture: Query<&mut Handle<Image>, With<TrolleyTexture>>,
     trolley_turn_texture: Res<TrolleyTurnRes>,
     trolley_side_texture: Res<TrolleySideRes>,
+    mut next_animation_state: ResMut<NextState<AnimationState>>,
 ) {
     let previous_time_remaining = timer.remaining_secs();
 
     // Advance the state of the timer, checking if time just ran out
     if timer.tick(time.delta()).just_finished() {
-        // TODO: determine which way the trolley goes here
-        println!("time's up!");
+        next_animation_state.set(AnimationState::Running);
     }
 
     let current_time_remaining = timer.remaining_secs();
@@ -268,15 +265,11 @@ pub fn scenario_handle_click(
         Query<&mut Handle<Image>, With<TrackTexture>>,
         Query<&mut Handle<Image>, With<LeverPlayerTexture>>,
     )>,
-    // tracks_normal_texture: Res<TracksNormal>,
-    // tracks_switched_texture: Res<TracksSwitched>,
-    // lever_player_normal_texture: Res<LeverNormal>,
-    // lever_player_switched_texture: Res<LeverSwitched>,
     scenarios_config: Res<ScenariosConfigRes>,
-    playing_state: Res<State<PlayingState>>,
+    scenario_index_state: Res<State<ScenarioIndexState>>,
     image_assets: Res<ImageAssetMap>,
 ) {
-    let scenario_index = playing_state.0.unwrap();
+    let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
     let tracks_normal_texture = image_assets.get_by_name(&scenario.tracks_normal_texture);
     let tracks_switched_texture = image_assets.get_by_name(&scenario.tracks_switched_texture);
@@ -318,6 +311,43 @@ pub fn scenario_cleanup(mut commands: Commands, entities: Res<ScenarioEntitiesRe
     commands.remove_resource::<ScenarioTimer>();
 }
 
+/// Triggers when the animation has completed and prepares to go to the next
+/// scenario.
+fn animation_complete(mut commands: Commands) {
+    commands.insert_resource(PostAnimationTimer(Timer::from_seconds(
+        POST_ANIMATION_WAIT_TIME,
+        TimerMode::Once,
+    )));
+}
+
+/// Sets the scenario index state once [`GameState::Playing`] is entered.
+fn set_scenario_index_state(mut next_scenario_index_state: ResMut<NextState<ScenarioIndexState>>) {
+    next_scenario_index_state.set(ScenarioIndexState(Some(0)));
+}
+
+/// Unsets the scenario index state once [`GameState::Playing`] is exited.
+fn unset_scenario_index_state(
+    mut next_scenario_index_state: ResMut<NextState<ScenarioIndexState>>,
+) {
+    next_scenario_index_state.set(ScenarioIndexState(None));
+}
+
+/// Immediately goes to the next scenario.
+fn post_animation_wait(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut timer: ResMut<PostAnimationTimer>,
+    scenario_index_state: Res<State<ScenarioIndexState>>,
+    mut next_scenario_index_state: ResMut<NextState<ScenarioIndexState>>,
+) {
+    if timer.tick(time.delta()).just_finished() {
+        next_scenario_index_state.set(ScenarioIndexState(Some(
+            scenario_index_state.0.unwrap() + 1,
+        )));
+        commands.remove_resource::<PostAnimationTimer>();
+    }
+}
+
 /// Immediately sets the game state to [`GameState::EndScreen`].
 fn goto_end(mut next_game_state: ResMut<NextState<GameState>>) {
     next_game_state.set(GameState::EndScreen);
@@ -325,6 +355,12 @@ fn goto_end(mut next_game_state: ResMut<NextState<GameState>>) {
 
 /// A trolley problem scenario. Construct this using the builder pattern.
 #[derive(TypedBuilder)]
+#[builder(mutators(
+    /// Adds an animation to the scenario.
+    fn animation(&mut self, animation: Animation) {
+        self.animations.push(animation);
+    }
+))]
 pub struct Scenario {
     /// The scenario text.
     #[builder(setter(into))]
@@ -353,6 +389,9 @@ pub struct Scenario {
     /// The name of the track B hostages texture.
     #[builder(setter(into))]
     hostages_track_b_normal_texture: String,
+    /// The collection of scenario animations.
+    #[builder(default, via_mutators)]
+    animations: Vec<Animation>,
 }
 
 /// A plugin to simplify the configuration of trolley problem scenarios.
@@ -372,43 +411,70 @@ impl ScenarioCollectionPlugin {
 
 impl Plugin for ScenarioCollectionPlugin {
     fn build(&self, app: &mut App) {
+        // Add scenario enter/exit systems
+        app.add_systems(OnEnter(GameState::Playing), set_scenario_index_state);
+        app.add_systems(OnExit(GameState::Playing), unset_scenario_index_state);
+
+        // Add scenario systems
         let maybe_scenarios = self.scenarios.lock().unwrap().take();
 
         if let Some(scenarios) = maybe_scenarios {
             for index in 0..scenarios.len() {
-                app.add_systems(OnEnter(PlayingState(Some(index))), scenario_setup)
+                app.add_systems(OnEnter(ScenarioIndexState(Some(index))), scenario_setup)
                     .add_systems(
                         Update,
                         (
-                            scenario_update.run_if(in_state(PlayingState(Some(index)))),
+                            scenario_update.run_if(in_state(ScenarioIndexState(Some(index)))),
                             scenario_handle_click.run_if(
-                                in_state(PlayingState(Some(index)))
+                                in_state(ScenarioIndexState(Some(index)))
                                     .and_then(input_just_pressed(MouseButton::Left)),
                             ),
                         ),
                     )
-                    .add_systems(OnExit(PlayingState(Some(index))), scenario_cleanup);
+                    .add_systems(
+                        OnEnter(AnimationState::Complete),
+                        animation_complete.run_if(in_state(ScenarioIndexState(Some(index)))),
+                    )
+                    .add_systems(
+                        Update,
+                        post_animation_wait.run_if(
+                            in_state(ScenarioIndexState(Some(index)))
+                                .and_then(in_state(AnimationState::Complete)),
+                        ),
+                    )
+                    .add_systems(OnExit(ScenarioIndexState(Some(index))), scenario_cleanup);
             }
 
-            app.add_systems(OnEnter(PlayingState(Some(scenarios.len()))), goto_end);
+            app.add_systems(OnEnter(ScenarioIndexState(Some(scenarios.len()))), goto_end);
 
-            app.insert_resource(ScenariosConfigRes(
-                scenarios
-                    .into_iter()
-                    .map(|scenario| ScenarioConfig {
-                        text: scenario.text,
-                        duration: scenario.duration,
-                        hostages_track_a_pos: scenario.hostages_track_a_pos,
-                        hostages_track_b_pos: scenario.hostages_track_b_pos,
-                        tracks_normal_texture: scenario.tracks_normal_texture,
-                        tracks_switched_texture: scenario.tracks_switched_texture,
-                        lever_normal_texture: scenario.lever_normal_texture,
-                        lever_switched_texture: scenario.lever_switched_texture,
-                        hostages_track_a_normal_texture: scenario.hostages_track_a_normal_texture,
-                        hostages_track_b_normal_texture: scenario.hostages_track_b_normal_texture,
-                    })
-                    .collect(),
-            ));
+            let (scenario_config, animations) = scenarios
+                .into_iter()
+                .map(|scenario| {
+                    (
+                        ScenarioConfig {
+                            text: scenario.text,
+                            duration: scenario.duration,
+                            hostages_track_a_pos: scenario.hostages_track_a_pos,
+                            hostages_track_b_pos: scenario.hostages_track_b_pos,
+                            tracks_normal_texture: scenario.tracks_normal_texture,
+                            tracks_switched_texture: scenario.tracks_switched_texture,
+                            lever_normal_texture: scenario.lever_normal_texture,
+                            lever_switched_texture: scenario.lever_switched_texture,
+                            hostages_track_a_normal_texture: scenario
+                                .hostages_track_a_normal_texture,
+                            hostages_track_b_normal_texture: scenario
+                                .hostages_track_b_normal_texture,
+                        },
+                        scenario.animations,
+                    )
+                })
+                .unzip::<_, _, Vec<_>, Vec<_>>();
+
+            // Add all scenario configurations resource
+            app.insert_resource(ScenariosConfigRes(scenario_config));
+
+            // Add animations
+            app.add_plugins(AnimationCollectionPlugin::new(animations));
         }
     }
 }

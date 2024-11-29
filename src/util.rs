@@ -6,7 +6,7 @@ use std::time::Duration;
 
 /// Returns the value between `a` and `b`, such that the value is the `amount`
 /// portion of the way between `a` and `b`.
-const fn point_between(a: f32, b: f32, amount: f32) -> f32 {
+pub const fn point_between(a: f32, b: f32, amount: f32) -> f32 {
     (a * (1.0 - amount)) + (b * amount)
 }
 

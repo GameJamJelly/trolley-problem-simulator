@@ -7,6 +7,7 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
 
+mod animation;
 mod assets;
 mod constants;
 mod end_screen;

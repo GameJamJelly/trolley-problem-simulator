@@ -16,7 +16,7 @@ pub enum GameState {
 
 /// The state of the game being played.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States, Deref, DerefMut)]
-pub struct PlayingState(pub Option<usize>);
+pub struct ScenarioIndexState(pub Option<usize>);
 
 /// The state of the lever.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States)]
@@ -28,6 +28,18 @@ pub enum LeverState {
     Pulled,
 }
 
-/// The state of a changing scenario.
+/// The state of a scheduled animation.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States)]
+pub enum AnimationState {
+    /// Waiting to start the animation.
+    #[default]
+    Waiting,
+    /// The animation is running.
+    Running,
+    /// The animation has completed.
+    Complete,
+}
+
+/// The state of a running animation.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States, Deref, DerefMut)]
-pub struct ScenarioChangeState(pub bool);
+pub struct AnimationIndexState(pub Option<usize>);
