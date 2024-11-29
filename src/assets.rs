@@ -64,8 +64,8 @@ impl Plugin for EmbeddedAssetPlugin {
     fn build(&self, app: &mut App) {
         let image_asset_paths = insert_embedded_assets!(
             app,
-            "../assets/images/tracks-straight.png",
-            "../assets/images/tracks-pull.png",
+            "../assets/images/tracks-default.png",
+            "../assets/images/tracks-switched.png",
             "../assets/images/lever-default.png",
             "../assets/images/lever-pull.png",
             "../assets/images/hostage-1.png",
