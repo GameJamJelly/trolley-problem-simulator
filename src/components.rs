@@ -21,3 +21,7 @@ pub struct HostagesTrackBTexture;
 /// The trolley texture component.
 #[derive(Component)]
 pub struct TrolleyTexture;
+
+/// The scenario timer text component.
+#[derive(Component)]
+pub struct TimerText;

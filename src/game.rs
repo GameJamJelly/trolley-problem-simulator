@@ -97,7 +97,7 @@ impl Plugin for GamePlugin {
                             Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
                                 .on_lever_state(LeverState::Pulled)
                                 .node(AnimationNode::new(1.0, Transform::from_translation(Vec3::new(400.0, 190.0, 0.0))))
-                                .node(AnimationNode::new(5.0, Transform::from_translation(Vec3::new(900.0, 250.0, 0.0)))))
+                                .node(AnimationNode::new(5.0, Transform::from_translation(Vec3::new(900.0, 260.0, 0.0)))))
                         .build())
                 .build(),
         );

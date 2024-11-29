@@ -13,10 +13,6 @@ use std::sync::Mutex;
 use std::time::Duration;
 use typed_builder::TypedBuilder;
 
-/// The scenario timer text component.
-#[derive(Component)]
-pub struct TimerText;
-
 /// Sets up a scenario.
 pub fn scenario_setup(
     mut commands: Commands,
@@ -24,6 +20,7 @@ pub fn scenario_setup(
     scenario_index_state: Res<State<ScenarioIndexState>>,
     image_assets: Res<ImageAssetMap>,
     trolley_front_texture: Res<TrolleyFrontRes>,
+    mut next_lever_state: ResMut<NextState<LeverState>>,
 ) {
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
@@ -35,11 +32,15 @@ pub fn scenario_setup(
         image_assets.get_by_name(&scenario.hostages_track_b_normal_texture);
     let duration = Duration::from_secs_f32(scenario.duration);
 
+    // Reset the lever state
+    next_lever_state.set(LeverState::Normal);
+
     // Spawn the track texture
     let track_entity = commands
         .spawn((
             SpriteBundle {
                 texture: tracks_normal_texture.clone(),
+                transform: Transform::from_xyz(0.0, 0.0, -2.0),
                 ..default()
             },
             TrackTexture,
@@ -51,6 +52,7 @@ pub fn scenario_setup(
         .spawn((
             SpriteBundle {
                 texture: lever_player_normal_texture.clone(),
+                transform: Transform::from_xyz(0.0, 0.0, -1.0),
                 ..default()
             },
             LeverPlayerTexture,
@@ -62,8 +64,9 @@ pub fn scenario_setup(
         .spawn((
             SpriteBundle {
                 texture: hostages_track_a_normal_texture.clone(),
-                transform: Transform::from_translation(normalize_translation_to_canvas(
+                transform: Transform::from_translation(normalize_translation_to_canvas_with_z(
                     scenario.hostages_track_a_pos,
+                    -1.0,
                 )),
                 ..default()
             },
@@ -76,8 +79,9 @@ pub fn scenario_setup(
         .spawn((
             SpriteBundle {
                 texture: hostages_track_b_normal_texture.clone(),
-                transform: Transform::from_translation(normalize_translation_to_canvas(
+                transform: Transform::from_translation(normalize_translation_to_canvas_with_z(
                     scenario.hostages_track_b_pos,
+                    -1.0,
                 )),
                 ..default()
             },
@@ -110,8 +114,10 @@ pub fn scenario_setup(
                 bottom: Val::Px(0.0),
                 left: Val::Px(0.0),
                 width: Val::Vw(100.0),
+                justify_content: JustifyContent::Center,
                 ..default()
             },
+            transform: Transform::from_xyz(0.0, 0.0, 1.0),
             ..default()
         })
         .with_children(|parent| {
@@ -139,6 +145,7 @@ pub fn scenario_setup(
                 right: Val::Px(0.0),
                 ..default()
             },
+            transform: Transform::from_xyz(0.0, 0.0, 1.0),
             ..default()
         })
         .with_children(|parent| {

@@ -11,12 +11,18 @@ pub const fn point_between(a: f32, b: f32, amount: f32) -> f32 {
 }
 
 /// Normalizes a translation on the screen relative to the canvas.
-pub const fn normalize_translation_to_canvas(point: Vec2) -> Vec3 {
+pub const fn normalize_translation_to_canvas_with_z(point: Vec2, z: f32) -> Vec3 {
     Vec3::new(
         point.x - (SCREEN_WIDTH / 2.0),
         (SCREEN_HEIGHT - point.y) - (SCREEN_HEIGHT / 2.0),
-        0.0,
+        z,
     )
+}
+
+/// Normalizes a translation on the screen relative to the canvas, assuming
+/// `0.0` for the z coordinate.
+pub const fn normalize_translation_to_canvas(point: Vec2) -> Vec3 {
+    normalize_translation_to_canvas_with_z(point, 0.0)
 }
 
 /// Calculates the linear transform to perform on an object moving on the
