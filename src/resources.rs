@@ -88,6 +88,8 @@ pub struct AnimationConfig {
     pub start_transform: Transform,
     /// The collection of animation nodes.
     pub nodes: Vec<AnimationNodeConfig>,
+    /// The optional wounded texture.
+    pub wounded_texture: Option<String>,
 }
 
 /// Resource containing animation configuration for all scenarios.

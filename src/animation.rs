@@ -201,6 +201,8 @@ pub struct Animation {
     start_action: Option<SystemConfigs>,
     /// The collection of animation nodes.
     nodes: Vec<AnimationNode>,
+    /// The optional wounded texture.
+    wounded_texture: Option<String>,
 }
 
 impl Animation {
@@ -211,6 +213,7 @@ impl Animation {
             start_transform,
             start_action: None,
             nodes: Vec::new(),
+            wounded_texture: None,
         }
     }
 
@@ -230,6 +233,12 @@ impl Animation {
     /// Adds a new node to the animation.
     pub fn node(mut self, node: AnimationNode) -> Self {
         self.nodes.push(node);
+        self
+    }
+
+    /// Configures the wounded texture.
+    pub fn with_wounded_texture(mut self, wounded_texture: &str) -> Self {
+        self.wounded_texture = Some(wounded_texture.to_owned());
         self
     }
 }
@@ -277,6 +286,7 @@ impl Plugin for AnimationCollectionPlugin {
                                             animation_fn: node.animation_fn.clone(),
                                         })
                                         .collect(),
+                                    wounded_texture: animation.wounded_texture.clone(),
                                 },
                                 animation,
                             )
