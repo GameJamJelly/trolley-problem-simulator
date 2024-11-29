@@ -1,0 +1,48 @@
+//! Application constants.
+
+use bevy::prelude::*;
+
+/// The width of the screen in pixels.
+pub const SCREEN_WIDTH: f32 = 800.0;
+
+/// The height of the screen in pixels.
+pub const SCREEN_HEIGHT: f32 = 600.0;
+
+/// The normal color of a button.
+pub const NORMAL_BUTTON_COLOR: Color = Color::srgb(0.0, 0.0, 0.0);
+
+/// The color of a button when it is being hovered over.
+pub const HOVERED_BUTTON_COLOR: Color = Color::srgb(0.2, 0.2, 0.2);
+
+/// The color of a button when it is being pressed.
+pub const PRESSED_BUTTON_COLOR: Color = Color::srgb(0.3, 0.3, 0.3);
+
+/// The amount of time in seconds to wait after the trolley has finished its
+/// animation.
+pub const POST_ANIMATION_WAIT_TIME: f32 = 3.0;
+
+/// The exponential base by which to translate an object as it approaches from
+/// the horizon.
+pub const HORIZON_TRANSLATE_BASE: f32 = 1.25;
+
+/// The exponential base by which to scale an object as it approaches from the
+/// horizon.
+pub const HORIZON_SCALE_BASE: f32 = 1.1;
+
+/// The point on the horizon where the trolley approaches from.
+pub const APPROACHING_TROLLEY_HORIZON_POINT: Vec2 = Vec2::new(43.0, 61.0);
+
+/// The final state of the approaching trolley horizon transform.
+pub const APPROACHING_TROLLEY_HORIZON_END_TRANSFORM: Transform = Transform::IDENTITY
+    .with_translation(Vec3::new(50.0, 135.0, 0.0))
+    .with_scale(Vec3::new(0.8, 0.8, 1.0));
+
+/// The final state of the approaching trolley turn transform.
+pub const APPROACHING_TROLLEY_TURNING_END_TRANSFORM: Transform = Transform::IDENTITY
+    .with_translation(Vec3::new(112.0, 171.0, 0.0))
+    .with_scale(Vec3::new(0.85, 0.85, 1.0));
+
+/// The final state of the approaching trolley side transform.
+pub const APPROACHING_TROLLEY_SIDE_END_TRANSFORM: Transform = Transform::IDENTITY
+    .with_translation(Vec3::new(298.0, 229.0, 0.0))
+    .with_scale(Vec3::new(1.0, 1.0, 1.0));
