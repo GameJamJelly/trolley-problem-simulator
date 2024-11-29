@@ -2,6 +2,7 @@
 
 use crate::animation::*;
 use crate::assets::*;
+use crate::components::*;
 use crate::constants::*;
 use crate::end_screen::*;
 use crate::menu::*;
@@ -33,6 +34,22 @@ fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     // UI camera
     commands.spawn(Camera2dBundle::default());
+}
+
+/// Turns the trolley as it goes to track B.
+fn turn_trolley_switched_start(
+    mut trolley_texture: Query<&mut Handle<Image>, With<TrolleyTexture>>,
+    trolley_switched_texture: Res<TrolleySwitchedRes>,
+) {
+    *trolley_texture.single_mut() = trolley_switched_texture.clone();
+}
+
+/// Turns the trolley back to normal as it continues down track B.
+fn turn_trolley_switched_end(
+    mut trolley_texture: Query<&mut Handle<Image>, With<TrolleyTexture>>,
+    trolley_side_texture: Res<TrolleySideRes>,
+) {
+    *trolley_texture.single_mut() = trolley_side_texture.clone();
 }
 
 /// The plugin which orchestrates the game logic.
@@ -92,10 +109,14 @@ impl Plugin for GamePlugin {
         let standard_animation_track_b = move || {
             Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
                 .on_lever_state(LeverState::Pulled)
-                .node(AnimationNode::new(
-                    1.0,
-                    Transform::from_translation(Vec3::new(400.0, 190.0, 0.0)),
-                ))
+                .with_start_action(turn_trolley_switched_start)
+                .node(
+                    AnimationNode::new(
+                        1.0,
+                        Transform::from_translation(Vec3::new(400.0, 190.0, 0.0)),
+                    )
+                    .end_action(turn_trolley_switched_end),
+                )
                 .node(AnimationNode::new(
                     5.0,
                     Transform::from_translation(Vec3::new(900.0, 260.0, 0.0)),
