@@ -36,21 +36,21 @@ pub struct ScenarioConfig {
     /// The scenario duration.
     pub duration: f32,
     /// The position of hostages on track A.
-    pub hostages_track_a_pos: Vec2,
+    pub hostages_track_a_pos: Option<Vec2>,
     /// The position of hostages on track B.
-    pub hostages_track_b_pos: Vec2,
+    pub hostages_track_b_pos: Option<Vec2>,
     /// The name of the normal track texture.
     pub tracks_normal_texture: String,
     /// The name of the switched track texture.
-    pub tracks_switched_texture: String,
+    pub tracks_switched_texture: Option<String>,
     /// The name of the normal lever/player texture.
     pub lever_normal_texture: String,
     /// The name of the switched lever/player texture.
-    pub lever_switched_texture: String,
+    pub lever_switched_texture: Option<String>,
     /// The name of the track A hostages texture.
-    pub hostages_track_a_normal_texture: String,
+    pub hostages_track_a_normal_texture: Option<String>,
     /// The name of the track B hostages texture.
-    pub hostages_track_b_normal_texture: String,
+    pub hostages_track_b_normal_texture: Option<String>,
 }
 
 /// Scenarios configuration resource.
@@ -149,3 +149,7 @@ pub struct TrolleyTurnRes(pub Handle<Image>);
 /// The resource for the side-facing trolley texture.
 #[derive(Resource, Deref, DerefMut)]
 pub struct TrolleySideRes(pub Handle<Image>);
+
+/// The resource for the lever-pulled turning trolley texture.
+#[derive(Resource, Deref, DerefMut)]
+pub struct TrolleySwitchedRes(pub Handle<Image>);

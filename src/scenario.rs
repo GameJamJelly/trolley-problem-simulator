@@ -26,155 +26,174 @@ pub fn scenario_setup(
     let scenario = scenarios_config.get_scenario(scenario_index);
     let tracks_normal_texture = image_assets.get_by_name(&scenario.tracks_normal_texture);
     let lever_player_normal_texture = image_assets.get_by_name(&scenario.lever_normal_texture);
-    let hostages_track_a_normal_texture =
-        image_assets.get_by_name(&scenario.hostages_track_a_normal_texture);
-    let hostages_track_b_normal_texture =
-        image_assets.get_by_name(&scenario.hostages_track_b_normal_texture);
+    let hostages_track_a_normal_texture = scenario
+        .hostages_track_a_normal_texture
+        .as_ref()
+        .map(|texture| image_assets.get_by_name(texture));
+    let hostages_track_b_normal_texture = scenario
+        .hostages_track_b_normal_texture
+        .as_ref()
+        .map(|texture| image_assets.get_by_name(texture));
     let duration = Duration::from_secs_f32(scenario.duration);
 
     // Reset the lever state
     next_lever_state.set(LeverState::Normal);
 
+    // Keep a collection of all entities spawned
+    let mut entities = Vec::new();
+
     // Spawn the track texture
-    let track_entity = commands
-        .spawn((
-            SpriteBundle {
-                texture: tracks_normal_texture.clone(),
-                transform: Transform::from_xyz(0.0, 0.0, -2.0),
-                ..default()
-            },
-            TrackTexture,
-        ))
-        .id();
+    entities.push(
+        commands
+            .spawn((
+                SpriteBundle {
+                    texture: tracks_normal_texture.clone(),
+                    transform: Transform::from_xyz(0.0, 0.0, -2.0),
+                    ..default()
+                },
+                TrackTexture,
+            ))
+            .id(),
+    );
 
     // Spawn the lever/player texture
-    let lever_player_entity = commands
-        .spawn((
-            SpriteBundle {
-                texture: lever_player_normal_texture.clone(),
-                transform: Transform::from_xyz(0.0, 0.0, -1.0),
-                ..default()
-            },
-            LeverPlayerTexture,
-        ))
-        .id();
+    entities.push(
+        commands
+            .spawn((
+                SpriteBundle {
+                    texture: lever_player_normal_texture.clone(),
+                    transform: Transform::from_xyz(0.0, 0.0, -1.0),
+                    ..default()
+                },
+                LeverPlayerTexture,
+            ))
+            .id(),
+    );
 
     // Spawn the texture for the hostages on track A
-    let hostages_track_a_entity = commands
-        .spawn((
-            SpriteBundle {
-                texture: hostages_track_a_normal_texture.clone(),
-                transform: Transform::from_translation(normalize_translation_to_canvas_with_z(
-                    scenario.hostages_track_a_pos,
-                    -1.0,
-                )),
-                ..default()
-            },
-            HostagesTrackATexture,
-        ))
-        .id();
+    if let Some(texture) = hostages_track_a_normal_texture {
+        if let Some(pos) = scenario.hostages_track_a_pos {
+            entities.push(
+                commands
+                    .spawn((
+                        SpriteBundle {
+                            texture,
+                            transform: Transform::from_translation(
+                                normalize_translation_to_canvas_with_z(pos, -1.0),
+                            ),
+                            ..default()
+                        },
+                        HostagesTrackATexture,
+                    ))
+                    .id(),
+            );
+        }
+    }
 
     // Spawn the texture for the hostages on track B
-    let hostages_track_b_entity = commands
-        .spawn((
-            SpriteBundle {
-                texture: hostages_track_b_normal_texture.clone(),
-                transform: Transform::from_translation(normalize_translation_to_canvas_with_z(
-                    scenario.hostages_track_b_pos,
-                    -1.0,
-                )),
-                ..default()
-            },
-            HostagesTrackBTexture,
-        ))
-        .id();
+    if let Some(texture) = hostages_track_b_normal_texture {
+        if let Some(pos) = scenario.hostages_track_b_pos {
+            entities.push(
+                commands
+                    .spawn((
+                        SpriteBundle {
+                            texture,
+                            transform: Transform::from_translation(
+                                normalize_translation_to_canvas_with_z(pos, -1.0),
+                            ),
+                            ..default()
+                        },
+                        HostagesTrackBTexture,
+                    ))
+                    .id(),
+            );
+        }
+    }
 
     // Spawn the trolley texture
-    let trolley_entity = commands
-        .spawn((
-            SpriteBundle {
-                texture: trolley_front_texture.clone(),
-                transform: horizon_distance_transform(
-                    APPROACHING_TROLLEY_HORIZON_POINT,
-                    APPROACHING_TROLLEY_HORIZON_END_TRANSFORM,
-                    duration,
-                ),
-                ..default()
-            },
-            TrolleyTexture,
-        ))
-        .id();
+    entities.push(
+        commands
+            .spawn((
+                SpriteBundle {
+                    texture: trolley_front_texture.clone(),
+                    transform: horizon_distance_transform(
+                        APPROACHING_TROLLEY_HORIZON_POINT,
+                        APPROACHING_TROLLEY_HORIZON_END_TRANSFORM,
+                        duration,
+                    ),
+                    ..default()
+                },
+                TrolleyTexture,
+            ))
+            .id(),
+    );
 
     // Spawn the scenario text
-    let scenario_text_entity = commands
-        .spawn(NodeBundle {
-            style: Style {
-                padding: UiRect::all(Val::Px(24.0)),
-                position_type: PositionType::Absolute,
-                bottom: Val::Px(0.0),
-                left: Val::Px(0.0),
-                width: Val::Vw(100.0),
-                justify_content: JustifyContent::Center,
+    entities.push(
+        commands
+            .spawn(NodeBundle {
+                style: Style {
+                    padding: UiRect::all(Val::Px(24.0)),
+                    position_type: PositionType::Absolute,
+                    bottom: Val::Px(0.0),
+                    left: Val::Px(0.0),
+                    width: Val::Vw(100.0),
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
+                transform: Transform::from_xyz(0.0, 0.0, 1.0),
                 ..default()
-            },
-            transform: Transform::from_xyz(0.0, 0.0, 1.0),
-            ..default()
-        })
-        .with_children(|parent| {
-            parent.spawn(
-                TextBundle::from_section(
-                    scenario.text.clone(),
-                    TextStyle {
-                        font_size: 24.0,
-                        color: Color::BLACK,
-                        ..default()
-                    },
-                )
-                .with_text_justify(JustifyText::Center),
-            );
-        })
-        .id();
+            })
+            .with_children(|parent| {
+                parent.spawn(
+                    TextBundle::from_section(
+                        scenario.text.clone(),
+                        TextStyle {
+                            font_size: 24.0,
+                            color: Color::BLACK,
+                            ..default()
+                        },
+                    )
+                    .with_text_justify(JustifyText::Center),
+                );
+            })
+            .id(),
+    );
 
     // Spawn the timer text
-    let timer_text_entity = commands
-        .spawn(NodeBundle {
-            style: Style {
-                padding: UiRect::all(Val::Px(8.0)),
-                position_type: PositionType::Absolute,
-                top: Val::Px(0.0),
-                right: Val::Px(0.0),
+    entities.push(
+        commands
+            .spawn(NodeBundle {
+                style: Style {
+                    padding: UiRect::all(Val::Px(8.0)),
+                    position_type: PositionType::Absolute,
+                    top: Val::Px(0.0),
+                    right: Val::Px(0.0),
+                    ..default()
+                },
+                transform: Transform::from_xyz(0.0, 0.0, 1.0),
                 ..default()
-            },
-            transform: Transform::from_xyz(0.0, 0.0, 1.0),
-            ..default()
-        })
-        .with_children(|parent| {
-            parent.spawn((
-                TextBundle::from_section(
-                    format_timer_text(duration),
-                    TextStyle {
-                        font_size: 24.0,
-                        color: Color::BLACK,
-                        ..default()
-                    },
-                )
-                .with_text_justify(JustifyText::Right),
-                TimerText,
-            ));
-        })
-        .id();
+            })
+            .with_children(|parent| {
+                parent.spawn((
+                    TextBundle::from_section(
+                        format_timer_text(duration),
+                        TextStyle {
+                            font_size: 24.0,
+                            color: Color::BLACK,
+                            ..default()
+                        },
+                    )
+                    .with_text_justify(JustifyText::Right),
+                    TimerText,
+                ));
+            })
+            .id(),
+    );
 
     // Insert a resource containing all entities spawned so we can
     // remove them later
-    commands.insert_resource(ScenarioEntitiesRes(vec![
-        track_entity,
-        lever_player_entity,
-        hostages_track_a_entity,
-        hostages_track_b_entity,
-        trolley_entity,
-        scenario_text_entity,
-        timer_text_entity,
-    ]));
+    commands.insert_resource(ScenarioEntitiesRes(entities));
 
     // Insert the timer resource
     commands.insert_resource(ScenarioTimer(Timer::from_seconds(
@@ -260,9 +279,15 @@ pub fn scenario_handle_click(
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
     let tracks_normal_texture = image_assets.get_by_name(&scenario.tracks_normal_texture);
-    let tracks_switched_texture = image_assets.get_by_name(&scenario.tracks_switched_texture);
+    let tracks_switched_texture = scenario
+        .tracks_switched_texture
+        .as_ref()
+        .map(|texture| image_assets.get_by_name(texture));
     let lever_player_normal_texture = image_assets.get_by_name(&scenario.lever_normal_texture);
-    let lever_player_switched_texture = image_assets.get_by_name(&scenario.lever_switched_texture);
+    let lever_player_switched_texture = scenario
+        .lever_switched_texture
+        .as_ref()
+        .map(|texture| image_assets.get_by_name(texture));
 
     let lever_rect = Rect::new(346.0, 135.0, 410.0, 202.0);
 
@@ -270,14 +295,18 @@ pub fn scenario_handle_click(
         if lever_rect.contains(mouse_pos) {
             match lever_state.get() {
                 LeverState::Normal => {
-                    next_lever_state.set(LeverState::Pulled);
-                    *texture_set.p0().single_mut() = tracks_switched_texture.clone();
-                    *texture_set.p1().single_mut() = lever_player_switched_texture.clone();
+                    if let Some(tracks_texture) = tracks_switched_texture {
+                        if let Some(lever_texture) = lever_player_switched_texture {
+                            next_lever_state.set(LeverState::Pulled);
+                            *texture_set.p0().single_mut() = tracks_texture;
+                            *texture_set.p1().single_mut() = lever_texture;
+                        }
+                    }
                 }
                 LeverState::Pulled => {
                     next_lever_state.set(LeverState::Normal);
-                    *texture_set.p0().single_mut() = tracks_normal_texture.clone();
-                    *texture_set.p1().single_mut() = lever_player_normal_texture.clone();
+                    *texture_set.p0().single_mut() = tracks_normal_texture;
+                    *texture_set.p1().single_mut() = lever_player_normal_texture;
                 }
             }
         }
@@ -358,27 +387,29 @@ pub struct Scenario {
     /// The scenario duration.
     duration: f32,
     /// The position of hostages on track A.
-    hostages_track_a_pos: Vec2,
+    #[builder(default, setter(strip_option))]
+    hostages_track_a_pos: Option<Vec2>,
     /// The position of hostages on track B.
-    hostages_track_b_pos: Vec2,
+    #[builder(default, setter(strip_option))]
+    hostages_track_b_pos: Option<Vec2>,
     /// The name of the normal track texture.
     #[builder(setter(into))]
     tracks_normal_texture: String,
     /// The name of the switched track texture.
-    #[builder(setter(into))]
-    tracks_switched_texture: String,
+    #[builder(default, setter(strip_option, into))]
+    tracks_switched_texture: Option<String>,
     /// The name of the normal lever/player texture.
     #[builder(setter(into))]
     lever_normal_texture: String,
     /// The name of the switched lever/player texture.
-    #[builder(setter(into))]
-    lever_switched_texture: String,
+    #[builder(default, setter(strip_option, into))]
+    lever_switched_texture: Option<String>,
     /// The name of the track A hostages texture.
-    #[builder(setter(into))]
-    hostages_track_a_normal_texture: String,
+    #[builder(default, setter(strip_option, into))]
+    hostages_track_a_normal_texture: Option<String>,
     /// The name of the track B hostages texture.
-    #[builder(setter(into))]
-    hostages_track_b_normal_texture: String,
+    #[builder(default, setter(strip_option, into))]
+    hostages_track_b_normal_texture: Option<String>,
     /// The collection of scenario animations.
     #[builder(default, via_mutators)]
     animations: Vec<Animation>,
