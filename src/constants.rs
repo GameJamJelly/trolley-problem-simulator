@@ -52,3 +52,6 @@ pub const STANDARD_HOSTAGES_POS_TRACK_A: Vec2 = Vec2::new(530.0, 325.0);
 
 /// The standard position of hostages on track B.
 pub const STANDARD_HOSTAGES_POS_TRACK_B: Vec2 = Vec2::new(550.0, 230.0);
+
+/// The transform for the double it next person's switch.
+pub const NEXT_PERSON_SWITCH_TRANSFORM: Transform = Transform::from_xyz(650.0, 380.0, 0.0);

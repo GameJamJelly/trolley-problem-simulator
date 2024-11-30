@@ -73,6 +73,8 @@ impl Plugin for EmbeddedAssetPlugin {
             "../assets/images/darwinism-hostage-1.png",
             "../assets/images/darwinism-hostage-5-wounded.png",
             "../assets/images/darwinism-hostage-5.png",
+            "../assets/images/double-it-hostage-2-wounded.png",
+            "../assets/images/double-it-hostage-2.png",
             "../assets/images/double-it-left-normal.png",
             "../assets/images/double-it-left-switched.png",
             "../assets/images/double-it-right-normal.png",

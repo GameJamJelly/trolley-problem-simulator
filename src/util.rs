@@ -115,3 +115,8 @@ pub const fn time_remaining_reached(
     previous_time_remaining >= target_time_remaining
         && target_time_remaining >= current_time_remaining
 }
+
+/// Returns a random amount of time to wait before switching the track.
+pub fn random_switch_delay() -> Duration {
+    Duration::from_secs_f32(rand::random::<f32>() % 2.0)
+}

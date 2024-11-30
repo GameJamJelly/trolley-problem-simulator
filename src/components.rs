@@ -33,3 +33,15 @@ pub struct TripodTexture;
 /// The cliff texture component.
 #[derive(Component)]
 pub struct CliffTexture;
+
+/// The track texture component for the right half of the double it scenario.
+#[derive(Component)]
+pub struct DoubleItRightHalfTrackTexture;
+
+/// The double hostages texture.
+#[derive(Component)]
+pub struct DoubleItHostagesTexture;
+
+/// The next person texture.
+#[derive(Component)]
+pub struct NextPersonTexture;

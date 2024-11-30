@@ -104,7 +104,7 @@ fn standard_animation_track_a(wounded_texture: Option<&str>) -> Animation {
         )
         .node(AnimationNode::new(
             4.0,
-            Transform::from_translation(Vec3::new(900.0, 445.0, 0.0)),
+            Transform::from_xyz(900.0, 445.0, 0.0),
         ));
 
     if let Some(texture) = wounded_texture {
@@ -195,6 +195,147 @@ fn scenario_cliff_end(mut commands: Commands, entities: Res<ScenarioExtraEntitie
 
     // Remove the entities resource
     commands.remove_resource::<ScenarioExtraEntitiesRes>();
+}
+
+/// Double it start system.
+fn scenario_double_it_start(mut commands: Commands, image_assets: Res<ImageAssetMap>) {
+    let right_half_texture = image_assets.get_by_name("double-it-right-normal");
+    let next_person_texture = image_assets.get_by_name("original-lever-normal");
+    let hostage_2_texture = image_assets.get_by_name("double-it-hostage-2");
+
+    let mut entities = Vec::new();
+
+    // Spawn the right half of the screen
+    entities.push(
+        commands
+            .spawn((
+                SpriteBundle {
+                    texture: right_half_texture,
+                    transform: Transform::from_xyz(0.0, 0.0, -20.0),
+                    ..default()
+                },
+                DoubleItRightHalfTrackTexture,
+            ))
+            .id(),
+    );
+
+    // Spawn the next person
+    entities.push(
+        commands
+            .spawn((
+                SpriteBundle {
+                    texture: next_person_texture,
+                    transform: Transform::from_xyz(280.0, -145.0, -10.0),
+                    ..default()
+                },
+                NextPersonTexture,
+            ))
+            .id(),
+    );
+
+    // Spawn the double hostage texture
+    entities.push(
+        commands
+            .spawn((
+                SpriteBundle {
+                    texture: hostage_2_texture,
+                    transform: normalize_transform_to_canvas(Transform::from_xyz(
+                        765.0, 335.0, -10.0,
+                    )),
+                    ..default()
+                },
+                DoubleItHostagesTexture,
+            ))
+            .id(),
+    );
+
+    // Insert the extra scenario entities resource
+    commands.insert_resource(ScenarioExtraEntitiesRes(entities));
+
+    // Insert the next person's lever state as a resource
+    commands.insert_resource(NextPersonSwitchRes(false));
+
+    // Insert the next person's switch timer resource
+    commands.insert_resource(NextPersonSwitchTimerRes(Timer::new(
+        random_switch_delay(),
+        TimerMode::Once,
+    )));
+}
+
+/// Double it update system.
+fn scenario_double_it_update(
+    time: Res<Time>,
+    mut timer: ResMut<NextPersonSwitchTimerRes>,
+    mut switch: ResMut<NextPersonSwitchRes>,
+    mut texture_set: ParamSet<(
+        Query<&mut Handle<Image>, With<DoubleItRightHalfTrackTexture>>,
+        Query<&mut Handle<Image>, With<NextPersonTexture>>,
+    )>,
+    image_assets: Res<ImageAssetMap>,
+    next_switch_reached: Option<Res<NextSwitchReachedRes>>,
+) {
+    #[allow(clippy::collapsible_if)]
+    if next_switch_reached.is_none() {
+        if timer.tick(time.delta()).just_finished() {
+            **switch = !**switch;
+            **timer = Timer::new(random_switch_delay(), TimerMode::Once);
+
+            let (right_half_texture_name, next_person_texture_name) = if **switch {
+                ("double-it-right-normal", "original-lever-normal")
+            } else {
+                ("double-it-right-switched", "original-lever-switched")
+            };
+            let right_half_texture = image_assets.get_by_name(right_half_texture_name);
+            let next_person_texture = image_assets.get_by_name(next_person_texture_name);
+
+            *texture_set.p0().single_mut() = right_half_texture;
+            *texture_set.p1().single_mut() = next_person_texture;
+        }
+    }
+}
+
+/// Inserts the resource marking that the next switch has been reached.
+fn set_next_switch_reached(
+    mut commands: Commands,
+    mut switch: ResMut<NextPersonSwitchRes>,
+    mut texture_set: ParamSet<(
+        Query<&mut Handle<Image>, With<DoubleItRightHalfTrackTexture>>,
+        Query<&mut Handle<Image>, With<NextPersonTexture>>,
+    )>,
+    image_assets: Res<ImageAssetMap>,
+) {
+    // Insert the marker resource
+    commands.insert_resource(NextSwitchReachedRes);
+
+    // Set the next switch to normal
+    **switch = false;
+
+    let right_half_texture = image_assets.get_by_name("double-it-right-normal");
+    let next_person_texture = image_assets.get_by_name("original-lever-normal");
+
+    *texture_set.p0().single_mut() = right_half_texture;
+    *texture_set.p1().single_mut() = next_person_texture;
+}
+
+/// Double it end system.
+fn scenario_double_it_end(mut commands: Commands, entities: Res<ScenarioExtraEntitiesRes>) {
+    // Despawn the assets
+    for entity in &**entities {
+        let entity_commands = commands.entity(*entity);
+        entity_commands.despawn_recursive();
+    }
+
+    // Remove the entities resource
+    commands.remove_resource::<ScenarioExtraEntitiesRes>();
+
+    // Remove the next person's switch resource
+    commands.remove_resource::<NextPersonSwitchRes>();
+
+    // Remove the next person's switch timer resource
+    commands.remove_resource::<NextPersonSwitchTimerRes>();
+
+    // Remove the next switch reached marker resource
+    commands.remove_resource::<NextSwitchReachedRes>();
 }
 
 /// Youtube prank start system.
@@ -501,7 +642,35 @@ impl Plugin for GamePlugin {
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .build();
 
-        // TODO: Double it
+        // Double it
+        let scenario_double_it = Scenario::builder()
+            .text("Would you kill one person or double it and give it to the next person?")
+            .duration(15.0)
+            .hostages_track_b_pos(STANDARD_HOSTAGES_POS_TRACK_B)
+            .tracks_normal_texture("double-it-left-normal")
+            .tracks_switched_texture("double-it-left-switched")
+            .lever_normal_texture("original-lever-normal")
+            .lever_switched_texture("original-lever-switched")
+            .hostages_track_b_normal_texture("original-hostage-1")
+            .animation(
+                Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
+                    .on_lever_state(LeverState::Normal)
+                    .node(
+                        AnimationNode::new(3.0, NEXT_PERSON_SWITCH_TRANSFORM)
+                            .end_action(set_next_switch_reached),
+                    )
+                    .node(AnimationNode::new(
+                        2.0,
+                        Transform::from_xyz(900.0, 445.0, 0.0),
+                    )),
+            )
+            .animation(standard_animation_track_b(Some(
+                "original-hostage-1-wounded",
+            )))
+            .on_start(scenario_double_it_start)
+            .on_update(scenario_double_it_update)
+            .on_end(scenario_double_it_end)
+            .build();
 
         // TODO: Thomas the tank engine
 
@@ -541,6 +710,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_lobster)
                 .scenario(scenario_shopping_cart)
                 .scenario(scenario_born_lever_puller)
+                .scenario(scenario_double_it)
                 .scenario(scenario_youtube_prank)
                 .build(),
         );

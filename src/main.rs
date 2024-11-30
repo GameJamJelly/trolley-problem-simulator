@@ -6,6 +6,7 @@
 #![warn(clippy::missing_const_for_fn)]
 #![allow(clippy::too_many_arguments)]
 #![allow(clippy::type_complexity)]
+#![allow(clippy::vec_init_then_push)]
 
 mod animation;
 mod assets;

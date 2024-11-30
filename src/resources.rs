@@ -161,3 +161,15 @@ pub struct TrolleySideRes(pub Handle<Image>);
 /// The resource for the lever-pulled turning trolley texture.
 #[derive(Resource, Deref, DerefMut)]
 pub struct TrolleySwitchedRes(pub Handle<Image>);
+
+/// The double it next person's switch timer resource.
+#[derive(Resource, Deref, DerefMut)]
+pub struct NextPersonSwitchTimerRes(pub Timer);
+
+/// The resource containing the next person's switch state.
+#[derive(Resource, Deref, DerefMut)]
+pub struct NextPersonSwitchRes(pub bool);
+
+/// The marker resource to indicate that the next switch has been reached.
+#[derive(Resource)]
+pub struct NextSwitchReachedRes;
