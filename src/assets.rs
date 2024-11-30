@@ -100,6 +100,8 @@ impl Plugin for EmbeddedAssetPlugin {
             "../assets/images/original-trolley-switched.png",
             "../assets/images/original-trolley-side.png",
             "../assets/images/original-trolley-turn.png",
+            "../assets/images/self-one-track.png",
+            "../assets/images/self-standing.png",
             "../assets/images/self-wounded.png",
             "../assets/images/self.png",
             "../assets/images/shopping-cart-return-tracks.png",

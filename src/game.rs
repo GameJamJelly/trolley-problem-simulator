@@ -672,7 +672,34 @@ impl Plugin for GamePlugin {
             .on_end(scenario_double_it_end)
             .build();
 
-        // TODO: Thomas the tank engine
+        // Thomas the tank engine
+        let scenario_thomas_the_tank_engine = Scenario::builder()
+            .text("There is only one track. Everyone is in danger and there is nothing you can do to save anyone. Also the trolley is Thomas the Tank Engine.")
+            .duration(10.0)
+            .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
+            .tracks_normal_texture("self-one-track")
+            .lever_normal_texture("self-standing")
+            .hostages_track_a_normal_texture("original-hostage-5")
+            .override_trolley_texture("thomas-the-tank-engine")
+            .animation(
+                Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
+                    .with_wounded_texture("original-hostage-5-wounded")
+                    .node(
+                        AnimationNode::new(
+                            2.0,
+                            Transform::from_xyz(
+                                STANDARD_HOSTAGES_POS_TRACK_A.x,
+                                STANDARD_HOSTAGES_POS_TRACK_A.y,
+                                0.0,
+                            ),
+                        )
+                        .end_action(show_wounded_track_a),
+                    )
+                    .node(AnimationNode::new(
+                        4.0,
+                        Transform::from_xyz(900.0, 445.0, 0.0),
+                    )))
+            .build();
 
         // Youtube prank
         let scenario_youtube_prank = Scenario::builder()
@@ -711,6 +738,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_shopping_cart)
                 .scenario(scenario_born_lever_puller)
                 .scenario(scenario_double_it)
+                .scenario(scenario_thomas_the_tank_engine)
                 .scenario(scenario_youtube_prank)
                 .build(),
         );
