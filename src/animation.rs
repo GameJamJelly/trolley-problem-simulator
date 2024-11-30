@@ -27,30 +27,28 @@ pub const fn linear_animation(
     let transformed_scale = point_between(start_scale, end_scale, progress);
 
     Transform::IDENTITY
-        .with_translation(normalize_translation_to_canvas(Vec2::new(
-            transformed_x,
-            transformed_y,
-        )))
+        .with_translation(Vec3::new(transformed_x, transformed_y, 0.0))
         .with_scale(Vec3::new(transformed_scale, transformed_scale, 1.0))
 }
 
 /// Sets the animation index state once [`AnimationState::Running`] is entered.
 fn set_animation_index_state(
+    scenario_index_state: Res<State<ScenarioIndexState>>,
     mut next_animation_index_state: ResMut<NextState<AnimationIndexState>>,
     mut next_animation_node_index_state: ResMut<NextState<AnimationNodeIndexState>>,
     animation_config: Res<AnimationConfigRes>,
     lever_state: Res<State<LeverState>>,
 ) {
+    let scenario_index = scenario_index_state.unwrap();
+
     next_animation_node_index_state.set(AnimationNodeIndexState(Some(0)));
 
-    for scenario_animations in &animation_config.0 {
-        for (animation_index, animation) in scenario_animations.iter().enumerate() {
-            if match animation.lever_state_condition {
-                Some(desired_state) => desired_state == **lever_state,
-                None => true,
-            } {
-                next_animation_index_state.set(AnimationIndexState(Some(animation_index)));
-            }
+    for (animation_index, animation) in animation_config.0[scenario_index].iter().enumerate() {
+        if match animation.lever_state_condition {
+            Some(desired_state) => desired_state == **lever_state,
+            None => true,
+        } {
+            next_animation_index_state.set(AnimationIndexState(Some(animation_index)));
         }
     }
 }
@@ -120,7 +118,7 @@ fn animation_update(
     let progress = 1.0 - (animation_section_timer.remaining_secs() / this_node.duration);
 
     let new_transform = (this_node.animation_fn)(from_transform, this_node.transform, progress);
-    *trolley_transform.single_mut() = new_transform;
+    *trolley_transform.single_mut() = normalize_transform_to_canvas(new_transform);
 }
 
 /// A wrapper around an animation function.

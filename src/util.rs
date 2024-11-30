@@ -25,6 +25,14 @@ pub const fn normalize_translation_to_canvas(point: Vec2) -> Vec3 {
     normalize_translation_to_canvas_with_z(point, 0.0)
 }
 
+/// Normalizes a transform on the screen relative to the canvas.
+pub const fn normalize_transform_to_canvas(transform: Transform) -> Transform {
+    transform.with_translation(normalize_translation_to_canvas_with_z(
+        Vec2::new(transform.translation.x, transform.translation.y),
+        transform.translation.z,
+    ))
+}
+
 /// Calculates the linear transform to perform on an object moving on the
 /// screen.
 pub fn movement_transform(
