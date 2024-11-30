@@ -8,26 +8,29 @@ use bevy::ecs::schedule::SystemConfigs;
 use bevy::prelude::*;
 use std::sync::{Arc, Mutex};
 
-/// A linear animation transformation. Does not perform rotations. This is the
-/// default animation function.
-pub const fn linear_animation(
+/// A linear animation transformation. This is the default animation function.
+pub fn linear_animation(
     start_transform: Transform,
     end_transform: Transform,
     progress: f32,
 ) -> Transform {
     let start_point_x = start_transform.translation.x;
     let start_point_y = start_transform.translation.y;
+    let start_rotation = start_transform.rotation.z;
     let start_scale = start_transform.scale.x;
     let end_point_x = end_transform.translation.x;
     let end_point_y = end_transform.translation.y;
+    let end_rotation = end_transform.rotation.z;
     let end_scale = end_transform.scale.x;
 
     let transformed_x = point_between(start_point_x, end_point_x, progress);
     let transformed_y = point_between(start_point_y, end_point_y, progress);
+    let transformed_rotation = point_between(start_rotation, end_rotation, progress);
     let transformed_scale = point_between(start_scale, end_scale, progress);
 
     Transform::IDENTITY
         .with_translation(Vec3::new(transformed_x, transformed_y, 0.0))
+        .with_rotation(Quat::from_rotation_z(transformed_rotation))
         .with_scale(Vec3::new(transformed_scale, transformed_scale, 1.0))
 }
 

@@ -49,7 +49,7 @@ pub fn scenario_setup(
             .spawn((
                 SpriteBundle {
                     texture: tracks_normal_texture.clone(),
-                    transform: Transform::from_xyz(0.0, 0.0, -2.0),
+                    transform: Transform::from_xyz(0.0, 0.0, -20.0),
                     ..default()
                 },
                 TrackTexture,
@@ -63,7 +63,7 @@ pub fn scenario_setup(
             .spawn((
                 SpriteBundle {
                     texture: lever_player_normal_texture.clone(),
-                    transform: Transform::from_xyz(0.0, 0.0, -1.0),
+                    transform: Transform::from_xyz(0.0, 0.0, -10.0),
                     ..default()
                 },
                 LeverPlayerTexture,
@@ -80,7 +80,7 @@ pub fn scenario_setup(
                         SpriteBundle {
                             texture,
                             transform: Transform::from_translation(
-                                normalize_translation_to_canvas_with_z(pos, -1.0),
+                                normalize_translation_to_canvas_with_z(pos, -10.0),
                             ),
                             ..default()
                         },
@@ -100,7 +100,7 @@ pub fn scenario_setup(
                         SpriteBundle {
                             texture,
                             transform: Transform::from_translation(
-                                normalize_translation_to_canvas_with_z(pos, -1.0),
+                                normalize_translation_to_canvas_with_z(pos, -10.0),
                             ),
                             ..default()
                         },
@@ -142,7 +142,7 @@ pub fn scenario_setup(
                     justify_content: JustifyContent::Center,
                     ..default()
                 },
-                transform: Transform::from_xyz(0.0, 0.0, 1.0),
+                transform: Transform::from_xyz(0.0, 0.0, 10.0),
                 ..default()
             })
             .with_children(|parent| {
@@ -172,7 +172,7 @@ pub fn scenario_setup(
                     right: Val::Px(0.0),
                     ..default()
                 },
-                transform: Transform::from_xyz(0.0, 0.0, 1.0),
+                transform: Transform::from_xyz(0.0, 0.0, 10.0),
                 ..default()
             })
             .with_children(|parent| {

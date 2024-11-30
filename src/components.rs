@@ -29,3 +29,7 @@ pub struct TimerText;
 /// The Youtube tripod texture component.
 #[derive(Component)]
 pub struct TripodTexture;
+
+/// The cliff texture component.
+#[derive(Component)]
+pub struct CliffTexture;
