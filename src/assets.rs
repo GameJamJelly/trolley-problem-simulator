@@ -82,6 +82,8 @@ impl Plugin for EmbeddedAssetPlugin {
             "../assets/images/hat-lever-normal.png",
             "../assets/images/hat-lever-switched.png",
             "../assets/images/hat.png",
+            "../assets/images/lobster-hostage-5-wounded.png",
+            "../assets/images/lobster-hostage-5.png",
             "../assets/images/loop-normal.png",
             "../assets/images/loop-switched.png",
             "../assets/images/original-hostage-1-wounded.png",

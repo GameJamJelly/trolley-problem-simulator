@@ -362,6 +362,20 @@ impl Plugin for GamePlugin {
         // TODO: Loan forgiveness
 
         // TODO: Lobster
+        let scenario_lobster = Scenario::builder()
+            .text("A trolley is headed towards a group of five lobsters. Are you really going to let five lobsters die?")
+            .duration(15.0)
+            .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
+            .hostages_track_b_pos(STANDARD_HOSTAGES_POS_TRACK_B)
+            .tracks_normal_texture("original-tracks-normal")
+            .tracks_switched_texture("original-tracks-switched")
+            .lever_normal_texture("original-lever-normal")
+            .lever_switched_texture("original-lever-switched")
+            .hostages_track_a_normal_texture("lobster-hostage-5")
+            .hostages_track_b_normal_texture("original-hostage-1")
+            .animation(standard_animation_track_a(Some("lobster-hostage-5-wounded")))
+            .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .build();
 
         // TODO: Shopping cart
 
@@ -398,6 +412,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_darwinism)
                 .scenario(scenario_loop)
                 .scenario(scenario_professors)
+                .scenario(scenario_lobster)
                 .scenario(scenario_born_lever_puller)
                 .build(),
         );
