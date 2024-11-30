@@ -45,3 +45,7 @@ pub struct DoubleItHostagesTexture;
 /// The next person texture.
 #[derive(Component)]
 pub struct NextPersonTexture;
+
+/// The texture for the other hostages.
+#[derive(Component)]
+pub struct OtherHostagesTexture;

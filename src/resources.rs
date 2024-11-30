@@ -173,3 +173,7 @@ pub struct NextPersonSwitchRes(pub bool);
 /// The marker resource to indicate that the next switch has been reached.
 #[derive(Resource)]
 pub struct NextSwitchReachedRes;
+
+/// A resource to time when the other hostages texture swap should happen.
+#[derive(Resource, Deref, DerefMut)]
+pub struct OtherHostagesTextureSwapTimerRes(pub Timer);

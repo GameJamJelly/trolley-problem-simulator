@@ -12,6 +12,7 @@ use crate::states::*;
 use crate::util::*;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
+use std::time::Duration;
 
 /// Loads game assets and stores them as resources.
 fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -195,6 +196,65 @@ fn scenario_cliff_end(mut commands: Commands, entities: Res<ScenarioExtraEntitie
 
     // Remove the entities resource
     commands.remove_resource::<ScenarioExtraEntitiesRes>();
+}
+
+/// Loan forgiveness start system.
+fn scenario_loan_forgiveness_start(
+    mut commands: Commands,
+    image_assets: Res<ImageAssetMap>,
+    scenarios_config: Res<ScenariosConfigRes>,
+    scenario_index_state: Res<State<ScenarioIndexState>>,
+) {
+    // Spawn the other hostages asset
+    let other_hostages_texture = image_assets.get_by_name("age-hostage-10");
+    let other_hostages_entity = commands
+        .spawn((
+            SpriteBundle {
+                texture: other_hostages_texture,
+                transform: normalize_transform_to_canvas(Transform::from_xyz(170.0, 210.0, -10.0)),
+                ..default()
+            },
+            OtherHostagesTexture,
+        ))
+        .id();
+    commands.insert_resource(ScenarioExtraEntitiesRes(vec![other_hostages_entity]));
+
+    // Set a timer for swapping the other hostages asset
+    let scenario_index = scenario_index_state.0.unwrap();
+    let scenario = scenarios_config.get_scenario(scenario_index);
+    let duration = Duration::from_secs_f32(scenario.duration - 1.5);
+    commands.insert_resource(OtherHostagesTextureSwapTimerRes(Timer::new(
+        duration,
+        TimerMode::Once,
+    )));
+}
+
+/// Loan forgiveness update system.
+fn scenario_loan_forgiveness_update(
+    time: Res<Time>,
+    mut timer: ResMut<OtherHostagesTextureSwapTimerRes>,
+    image_assets: Res<ImageAssetMap>,
+    mut other_hostages_texture: Query<&mut Handle<Image>, With<OtherHostagesTexture>>,
+) {
+    if timer.tick(time.delta()).just_finished() {
+        let other_hostages_wounded_texture = image_assets.get_by_name("age-hostage-10-wounded");
+        *other_hostages_texture.single_mut() = other_hostages_wounded_texture;
+    }
+}
+
+/// Loan forgiveness end system.
+fn scenario_loan_forgiveness_end(mut commands: Commands, entities: Res<ScenarioExtraEntitiesRes>) {
+    // Despawn the assets
+    for entity in &**entities {
+        let entity_commands = commands.entity(*entity);
+        entity_commands.despawn_recursive();
+    }
+
+    // Remove the entities resource
+    commands.remove_resource::<ScenarioExtraEntitiesRes>();
+
+    // Remove the other hostages texture swap timer
+    commands.remove_resource::<OtherHostagesTextureSwapTimerRes>();
 }
 
 /// Double it start system.
@@ -582,7 +642,7 @@ impl Plugin for GamePlugin {
 
         // Loan forgiveness
         let scenario_loan_forgiveness = Scenario::builder()
-            .text("The trolley has already run over ten people. Unless you intervene, it will run over an additional five people. But if you divert the trolley, wouldn't that be unfair to all the people it has already killed?")
+            .text("The trolley is going to run over ten people. Unless you intervene, it will run over an additional five people. But if you divert the trolley, wouldn't that be unfair to all the people it will have already killed?")
             .duration(20.0)
             .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
             .tracks_normal_texture("original-tracks-normal")
@@ -592,11 +652,14 @@ impl Plugin for GamePlugin {
             .hostages_track_a_normal_texture("original-hostage-5")
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(None))
+            .on_start(scenario_loan_forgiveness_start)
+            .on_update(scenario_loan_forgiveness_update)
+            .on_end(scenario_loan_forgiveness_end)
             .build();
 
         // Lobster
         let scenario_lobster = Scenario::builder()
-            .text("A trolley is headed towards a group of five lobsters. Are you really going to let five lobsters die?")
+            .text("A trolley is headed towards a group of five lobsters. Are you really going to let five innocent lobsters die?")
             .duration(15.0)
             .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
             .hostages_track_b_pos(STANDARD_HOSTAGES_POS_TRACK_B)
