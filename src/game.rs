@@ -9,6 +9,7 @@ use crate::menu::*;
 use crate::resources::*;
 use crate::scenario::*;
 use crate::states::*;
+use crate::util::*;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 
@@ -168,6 +169,35 @@ fn loop_animation(
             0.0,
         ))
         .with_rotation(Quat::from_rotation_z(std::f32::consts::TAU * progress))
+}
+
+/// Youtube prank start system.
+fn scenario_youtube_prank_start(mut commands: Commands, image_assets: Res<ImageAssetMap>) {
+    // Spawn the tripod asset
+    let tripod_texture = image_assets.get_by_name("youtube-prank-tripod");
+    let tripod_entity = commands
+        .spawn((
+            SpriteBundle {
+                texture: tripod_texture,
+                transform: normalize_transform_to_canvas(Transform::from_xyz(470.0, 415.0, 2.0)),
+                ..default()
+            },
+            TripodTexture,
+        ))
+        .id();
+    commands.insert_resource(ScenarioExtraEntitiesRes(vec![tripod_entity]));
+}
+
+/// Youtube prank end system.
+fn scenario_youtube_prank_end(mut commands: Commands, entities: Res<ScenarioExtraEntitiesRes>) {
+    // Despawn the assets
+    for entity in &**entities {
+        let entity_commands = commands.entity(*entity);
+        entity_commands.despawn_recursive();
+    }
+
+    // Remove the entities resource
+    commands.remove_resource::<ScenarioExtraEntitiesRes>();
 }
 
 /// The plugin which orchestrates the game logic.
@@ -361,7 +391,7 @@ impl Plugin for GamePlugin {
 
         // TODO: Loan forgiveness
 
-        // TODO: Lobster
+        // Lobster
         let scenario_lobster = Scenario::builder()
             .text("A trolley is headed towards a group of five lobsters. Are you really going to let five lobsters die?")
             .duration(15.0)
@@ -397,7 +427,23 @@ impl Plugin for GamePlugin {
 
         // TODO: Thomas the tank engine
 
-        // TODO: Youtube prank
+        // Youtube prank
+        let scenario_youtube_prank = Scenario::builder()
+            .text("Five reaction YouTubers tied themselves to the tracks and a trolley is heading straight for them. You notice the person tied to the other track is a dummy. Do you pull the lever to save them, contributing to their viral prank?")
+            .duration(25.0)
+            .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
+            .hostages_track_b_pos(STANDARD_HOSTAGES_POS_TRACK_B)
+            .tracks_normal_texture("original-tracks-normal")
+            .tracks_switched_texture("original-tracks-switched")
+            .lever_normal_texture("original-lever-normal")
+            .lever_switched_texture("original-lever-switched")
+            .hostages_track_a_normal_texture("youtube-prank-youtubers")
+            .hostages_track_b_normal_texture("youtube-prank-dummy")
+            .animation(standard_animation_track_a(Some("youtube-prank-youtubers-wounded")))
+            .animation(standard_animation_track_b(Some("youtube-prank-dummy-wounded")))
+            .on_start(scenario_youtube_prank_start)
+            .on_end(scenario_youtube_prank_end)
+            .build();
 
         // TODO: Self
 
@@ -414,6 +460,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_professors)
                 .scenario(scenario_lobster)
                 .scenario(scenario_born_lever_puller)
+                .scenario(scenario_youtube_prank)
                 .build(),
         );
     }

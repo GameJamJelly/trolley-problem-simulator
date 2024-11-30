@@ -112,6 +112,10 @@ pub struct MenuEntityRes(pub Entity);
 #[derive(Resource, Deref, DerefMut)]
 pub struct ScenarioEntitiesRes(pub Vec<Entity>);
 
+/// The resource containing extra entities spawned for a scenario.
+#[derive(Resource, Deref, DerefMut)]
+pub struct ScenarioExtraEntitiesRes(pub Vec<Entity>);
+
 /// The resource containing the UI entity spawned for the end screen.
 #[derive(Resource, Deref, DerefMut)]
 pub struct EndScreenEntityRes(pub Entity);

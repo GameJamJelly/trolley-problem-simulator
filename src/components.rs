@@ -25,3 +25,7 @@ pub struct TrolleyTexture;
 /// The scenario timer text component.
 #[derive(Component)]
 pub struct TimerText;
+
+/// The Youtube tripod texture component.
+#[derive(Component)]
+pub struct TripodTexture;

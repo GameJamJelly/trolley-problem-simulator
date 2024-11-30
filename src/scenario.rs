@@ -6,6 +6,7 @@ use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
 use crate::util::*;
+use bevy::ecs::schedule::SystemConfigs;
 use bevy::input::common_conditions::*;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -379,6 +380,21 @@ fn goto_end_scenario(mut next_game_state: ResMut<NextState<GameState>>) {
     pub fn animation(&mut self, animation: Animation) {
         self.animations.push(animation);
     }
+
+    /// Configures a system to run when the scenario begins.
+    pub fn on_start<M>(&mut self, system: impl IntoSystemConfigs<M>) {
+        self.on_start = Some(system.into_configs());
+    }
+
+    /// Configures a system to run while the scenario is running.
+    pub fn on_update<M>(&mut self, system: impl IntoSystemConfigs<M>) {
+        self.on_update = Some(system.into_configs());
+    }
+
+    /// Configures a system to run when the scenario ends.
+    pub fn on_end<M>(&mut self, system: impl IntoSystemConfigs<M>) {
+        self.on_end = Some(system.into_configs());
+    }
 ))]
 pub struct Scenario {
     /// The scenario text.
@@ -413,6 +429,15 @@ pub struct Scenario {
     /// The collection of scenario animations.
     #[builder(default, via_mutators)]
     animations: Vec<Animation>,
+    /// An optional system to run when the scenario begins.
+    #[builder(default, via_mutators)]
+    on_start: Option<SystemConfigs>,
+    /// An optional system to run while the scenario is running.
+    #[builder(default, via_mutators)]
+    on_update: Option<SystemConfigs>,
+    /// An optional system to run when the scenario ends.
+    #[builder(default, via_mutators)]
+    on_end: Option<SystemConfigs>,
 }
 
 /// A plugin to simplify the configuration of trolley problem scenarios.
@@ -440,7 +465,39 @@ impl Plugin for ScenarioCollectionPlugin {
         let maybe_scenarios = self.scenarios.lock().unwrap().take();
 
         if let Some(scenarios) = maybe_scenarios {
-            for index in 0..scenarios.len() {
+            let num_scenarios = scenarios.len();
+
+            let (scenario_config, animations_and_systems) = scenarios
+                .into_iter()
+                .map(|scenario| {
+                    (
+                        ScenarioConfig {
+                            text: scenario.text,
+                            duration: scenario.duration,
+                            hostages_track_a_pos: scenario.hostages_track_a_pos,
+                            hostages_track_b_pos: scenario.hostages_track_b_pos,
+                            tracks_normal_texture: scenario.tracks_normal_texture,
+                            tracks_switched_texture: scenario.tracks_switched_texture,
+                            lever_normal_texture: scenario.lever_normal_texture,
+                            lever_switched_texture: scenario.lever_switched_texture,
+                            hostages_track_a_normal_texture: scenario
+                                .hostages_track_a_normal_texture,
+                            hostages_track_b_normal_texture: scenario
+                                .hostages_track_b_normal_texture,
+                        },
+                        (
+                            scenario.animations,
+                            (scenario.on_start, scenario.on_update, scenario.on_end),
+                        ),
+                    )
+                })
+                .unzip::<_, _, Vec<_>, Vec<_>>();
+
+            let (animations, systems) = animations_and_systems
+                .into_iter()
+                .unzip::<_, _, Vec<_>, Vec<_>>();
+
+            for (index, scenario_systems) in systems.into_iter().enumerate() {
                 app.add_systems(OnEnter(ScenarioIndexState(Some(index))), scenario_setup)
                     .add_systems(
                         Update,
@@ -465,35 +522,27 @@ impl Plugin for ScenarioCollectionPlugin {
                         ),
                     )
                     .add_systems(OnExit(ScenarioIndexState(Some(index))), scenario_cleanup);
+
+                if let Some(on_start) = scenario_systems.0 {
+                    app.add_systems(OnEnter(ScenarioIndexState(Some(index))), on_start);
+                }
+
+                if let Some(on_update) = scenario_systems.1 {
+                    app.add_systems(
+                        Update,
+                        on_update.run_if(in_state(ScenarioIndexState(Some(index)))),
+                    );
+                }
+
+                if let Some(on_end) = scenario_systems.2 {
+                    app.add_systems(OnExit(ScenarioIndexState(Some(index))), on_end);
+                }
             }
 
             app.add_systems(
-                OnEnter(ScenarioIndexState(Some(scenarios.len()))),
+                OnEnter(ScenarioIndexState(Some(num_scenarios))),
                 goto_end_scenario,
             );
-
-            let (scenario_config, animations) = scenarios
-                .into_iter()
-                .map(|scenario| {
-                    (
-                        ScenarioConfig {
-                            text: scenario.text,
-                            duration: scenario.duration,
-                            hostages_track_a_pos: scenario.hostages_track_a_pos,
-                            hostages_track_b_pos: scenario.hostages_track_b_pos,
-                            tracks_normal_texture: scenario.tracks_normal_texture,
-                            tracks_switched_texture: scenario.tracks_switched_texture,
-                            lever_normal_texture: scenario.lever_normal_texture,
-                            lever_switched_texture: scenario.lever_switched_texture,
-                            hostages_track_a_normal_texture: scenario
-                                .hostages_track_a_normal_texture,
-                            hostages_track_b_normal_texture: scenario
-                                .hostages_track_b_normal_texture,
-                        },
-                        scenario.animations,
-                    )
-                })
-                .unzip::<_, _, Vec<_>, Vec<_>>();
 
             // Add all scenario configurations resource
             app.insert_resource(ScenariosConfigRes(scenario_config));
