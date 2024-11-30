@@ -439,7 +439,19 @@ impl Plugin for GamePlugin {
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .build();
 
-        // TODO: Loan forgiveness
+        // Loan forgiveness
+        let scenario_loan_forgiveness = Scenario::builder()
+            .text("The trolley has already run over ten people. Unless you intervene, it will run over an additional five people. But if you divert the trolley, wouldn't that be unfair to all the people it has already killed?")
+            .duration(20.0)
+            .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
+            .tracks_normal_texture("original-tracks-normal")
+            .tracks_switched_texture("original-tracks-switched")
+            .lever_normal_texture("original-lever-normal")
+            .lever_switched_texture("original-lever-switched")
+            .hostages_track_a_normal_texture("original-hostage-5")
+            .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
+            .animation(standard_animation_track_b(None))
+            .build();
 
         // Lobster
         let scenario_lobster = Scenario::builder()
@@ -509,6 +521,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_darwinism)
                 .scenario(scenario_loop)
                 .scenario(scenario_professors)
+                .scenario(scenario_loan_forgiveness)
                 .scenario(scenario_lobster)
                 .scenario(scenario_born_lever_puller)
                 .scenario(scenario_youtube_prank)
