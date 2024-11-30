@@ -469,7 +469,23 @@ impl Plugin for GamePlugin {
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .build();
 
-        // TODO: Shopping cart
+        // Shopping cart
+        let scenario_shopping_cart = Scenario::builder()
+            .text("There is no dire emergency. Do you accept your duty to return the cart even though you gain nothing?")
+            .duration(15.0)
+            .tracks_normal_texture("shopping-cart-tracks-normal")
+            .tracks_switched_texture("shopping-cart-tracks-switched")
+            .lever_normal_texture("original-lever-normal")
+            .lever_switched_texture("original-lever-switched")
+            .override_trolley_texture("shopping-cart")
+            .animation(standard_animation_track_a(None))
+            .animation(
+                Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
+                    .on_lever_state(LeverState::Pulled)
+                    .node(AnimationNode::new(1.0, Transform::from_xyz(400.0, 190.0, 0.0)))
+                    .node(AnimationNode::new(2.0, Transform::from_xyz(595.0, 240.0, 0.0)))
+                    .node(AnimationNode::new(1.0, Transform::from_xyz(680.0, 180.0, 0.0))))
+            .build();
 
         // Born lever puller
         let scenario_born_lever_puller = Scenario::builder()
@@ -523,6 +539,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_professors)
                 .scenario(scenario_loan_forgiveness)
                 .scenario(scenario_lobster)
+                .scenario(scenario_shopping_cart)
                 .scenario(scenario_born_lever_puller)
                 .scenario(scenario_youtube_prank)
                 .build(),

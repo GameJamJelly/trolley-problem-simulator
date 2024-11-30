@@ -35,6 +35,11 @@ pub fn scenario_setup(
         .hostages_track_b_normal_texture
         .as_ref()
         .map(|texture| image_assets.get_by_name(texture));
+    let trolley_texture_override = scenario
+        .trolley_texture_override
+        .as_ref()
+        .map(|texture| image_assets.get_by_name(texture));
+    let trolley_texture = trolley_texture_override.unwrap_or_else(|| trolley_front_texture.clone());
     let duration = Duration::from_secs_f32(scenario.duration);
 
     // Reset the lever state
@@ -116,7 +121,7 @@ pub fn scenario_setup(
         commands
             .spawn((
                 SpriteBundle {
-                    texture: trolley_front_texture.clone(),
+                    texture: trolley_texture,
                     transform: horizon_distance_transform(
                         APPROACHING_TROLLEY_HORIZON_POINT,
                         APPROACHING_TROLLEY_HORIZON_END_TRANSFORM,
@@ -213,7 +218,13 @@ pub fn scenario_update(
     trolley_turn_texture: Res<TrolleyTurnRes>,
     trolley_side_texture: Res<TrolleySideRes>,
     mut next_animation_state: ResMut<NextState<AnimationState>>,
+    scenarios_config: Res<ScenariosConfigRes>,
+    scenario_index_state: Res<State<ScenarioIndexState>>,
 ) {
+    let scenario_index = scenario_index_state.0.unwrap();
+    let scenario = scenarios_config.get_scenario(scenario_index);
+    let trolley_texture_overridden = scenario.trolley_texture_override.is_some();
+
     let previous_time_remaining = timer.remaining_secs();
 
     // Advance the state of the timer, checking if time just ran out
@@ -228,12 +239,16 @@ pub fn scenario_update(
         format_timer_text(timer.remaining().max(Duration::from_secs(0)));
 
     // Trigger the trolley to turn slightly
-    if time_remaining_reached(previous_time_remaining, current_time_remaining, 3.0) {
+    if time_remaining_reached(previous_time_remaining, current_time_remaining, 3.0)
+        && !trolley_texture_overridden
+    {
         *trolley_texture.single_mut() = trolley_turn_texture.clone();
     }
 
     // Trigger the trolley to turn sideways
-    if time_remaining_reached(previous_time_remaining, current_time_remaining, 2.0) {
+    if time_remaining_reached(previous_time_remaining, current_time_remaining, 2.0)
+        && !trolley_texture_overridden
+    {
         *trolley_texture.single_mut() = trolley_side_texture.clone();
     }
 
@@ -381,6 +396,11 @@ fn goto_end_scenario(mut next_game_state: ResMut<NextState<GameState>>) {
         self.animations.push(animation);
     }
 
+    /// Overrides the trolley texture.
+    pub fn override_trolley_texture(&mut self, texture: impl Into<String>) {
+        self.trolley_texture_override = Some(texture.into());
+    }
+
     /// Configures a system to run when the scenario begins.
     pub fn on_start<M>(&mut self, system: impl IntoSystemConfigs<M>) {
         self.on_start = Some(system.into_configs());
@@ -426,6 +446,9 @@ pub struct Scenario {
     /// The name of the track B hostages texture.
     #[builder(default, setter(strip_option, into))]
     hostages_track_b_normal_texture: Option<String>,
+    /// An optional override on the trolley texture.
+    #[builder(default, via_mutators)]
+    trolley_texture_override: Option<String>,
     /// The collection of scenario animations.
     #[builder(default, via_mutators)]
     animations: Vec<Animation>,
@@ -484,6 +507,7 @@ impl Plugin for ScenarioCollectionPlugin {
                                 .hostages_track_a_normal_texture,
                             hostages_track_b_normal_texture: scenario
                                 .hostages_track_b_normal_texture,
+                            trolley_texture_override: scenario.trolley_texture_override,
                         },
                         (
                             scenario.animations,
