@@ -189,3 +189,68 @@ pub enum SelfJumping {
     /// The player has been run over.
     RunOver,
 }
+
+impl SelfJumping {
+    /// Returns whether the player jumped onto the tracks.
+    pub const fn jumped(&self) -> bool {
+        !matches!(self, Self::NotJumping)
+    }
+}
+
+/// The summary of the game in progress.
+#[derive(Resource)]
+pub struct GameSummary {
+    /// Total number of people killed.
+    pub people_killed: usize,
+    /// Total number of people saved.
+    pub people_saved: usize,
+    /// Whether Hitler was killed.
+    pub killed_hitler: bool,
+    /// Whether the player got the cool hat.
+    pub got_cool_hat: bool,
+    /// Whether the player caused a preventable tragedy.
+    pub caused_preventable_tragedy: bool,
+    /// Whether the player enforced Darwinism.
+    pub enforced_darwinism: bool,
+    /// Whether the player made the trolley do a sick loop-da-loop.
+    pub did_sick_loop: bool,
+    /// Total number of lobsters killed.
+    pub lobsters_killed: usize,
+    /// Total number of lobsters saved.
+    pub lobsters_saved: usize,
+    /// Whether the player returned the shopping cart.
+    pub returned_shopping_cart: bool,
+    /// Whether the player doubled it and gave it to the next person.
+    pub doubled_it: bool,
+    /// Whether the player watched Thomas the tank engine kill people.
+    pub watched_thomas_kill_people: bool,
+    /// Whether the player contributed to the viral YouTube prank.
+    pub did_viral_prank: bool,
+    /// Whether the player killed themself.
+    pub killed_self: bool,
+    /// Whether the player solved philosophy.
+    pub solved_philosophy: bool,
+}
+
+impl GameSummary {
+    /// Create a new game summary with default values.
+    pub const fn new() -> Self {
+        Self {
+            people_killed: 0,
+            people_saved: 0,
+            killed_hitler: false,
+            got_cool_hat: false,
+            caused_preventable_tragedy: false,
+            enforced_darwinism: false,
+            did_sick_loop: false,
+            lobsters_killed: 0,
+            lobsters_saved: 0,
+            returned_shopping_cart: false,
+            doubled_it: false,
+            watched_thomas_kill_people: false,
+            killed_self: false,
+            did_viral_prank: false,
+            solved_philosophy: true,
+        }
+    }
+}

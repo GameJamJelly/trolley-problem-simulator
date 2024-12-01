@@ -9,6 +9,7 @@ use crate::menu::*;
 use crate::resources::*;
 use crate::scenario::*;
 use crate::states::*;
+use crate::summary::*;
 use crate::util::*;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
@@ -513,7 +514,7 @@ impl Plugin for GamePlugin {
 
         // Original
         let scenario_original = Scenario::builder()
-            .text("A trolley is headed towards a group of five people. You can intervene and pull the lever to switch the tracks so that only one person will be killed. Do you pull the lever?")
+            .text("A trolley is headed towards a group of five people. You can intervene and click on the lever to pull it and switch the tracks so that only one person will be killed. Do you pull the lever?")
             .duration(20.0)
             .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
             .hostages_track_b_pos(STANDARD_HOSTAGES_POS_TRACK_B)
@@ -525,6 +526,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("original-hostage-1")
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_original)
             .build();
 
         // Age
@@ -541,6 +543,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("original-hostage-1")
             .animation(standard_animation_track_a(Some("age-hostage-10-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_age)
             .build();
 
         // Clone
@@ -555,6 +558,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("original-hostage-1")
             .animation(standard_animation_track_a(None))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_clone)
             .build();
 
         // Cliff
@@ -589,7 +593,7 @@ impl Plugin for GamePlugin {
                                 .with_rotation(Quat::from_rotation_z(-0.375 * std::f32::consts::TAU)))))
             .animation(standard_animation_track_b(None))
             .on_start(scenario_cliff_start)
-            .on_end(scenario_cliff_end)
+            .on_end((scenario_cliff_end, update_summary_cliff))
             .build();
 
         // Cool hat
@@ -606,6 +610,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("hat-hostage")
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("hat-hostage-wounded")))
+            .on_end(update_summary_cool_hat)
             .build();
 
         // Victim
@@ -620,6 +625,7 @@ impl Plugin for GamePlugin {
             .hostages_track_a_normal_texture("victim")
             .animation(standard_animation_track_a(Some("victim-wounded")))
             .animation(standard_animation_track_b(None))
+            .on_end(update_summary_victim)
             .build();
 
         // Darwinism
@@ -636,6 +642,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("darwinism-hostage-5")
             .animation(standard_animation_track_a(Some("darwinism-hostage-1-wounded")))
             .animation(standard_animation_track_b(Some("darwinism-hostage-5-wounded")))
+            .on_end(update_summary_darwinism)
             .build();
 
         // Loop
@@ -663,6 +670,7 @@ impl Plugin for GamePlugin {
                     .node(AnimationNode::new(2.0, Transform::from_xyz(570.0, 305.0, 0.0)).animation_fn(loop_animation))
                     .node(AnimationNode::new(2.0, Transform::from_xyz(900.0, 445.0, 0.0))))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_loop)
             .build();
 
         // Professors
@@ -679,6 +687,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("original-hostage-1")
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_professors)
             .build();
 
         // Loan forgiveness
@@ -695,7 +704,7 @@ impl Plugin for GamePlugin {
             .animation(standard_animation_track_b(None))
             .on_start(scenario_loan_forgiveness_start)
             .on_update(scenario_loan_forgiveness_update)
-            .on_end(scenario_loan_forgiveness_end)
+            .on_end((scenario_loan_forgiveness_end, update_summary_loan_forgiveness))
             .build();
 
         // Lobster
@@ -712,6 +721,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("original-hostage-1")
             .animation(standard_animation_track_a(Some("lobster-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_lobster)
             .build();
 
         // Shopping cart
@@ -730,6 +740,7 @@ impl Plugin for GamePlugin {
                     .node(AnimationNode::new(1.0, Transform::from_xyz(400.0, 190.0, 0.0)))
                     .node(AnimationNode::new(2.0, Transform::from_xyz(595.0, 240.0, 0.0)))
                     .node(AnimationNode::new(1.0, Transform::from_xyz(680.0, 180.0, 0.0))))
+            .on_end(update_summary_shopping_cart)
             .build();
 
         // Born lever puller
@@ -744,6 +755,7 @@ impl Plugin for GamePlugin {
             .hostages_track_b_normal_texture("original-hostage-1")
             .animation(standard_animation_track_a(None))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
+            .on_end(update_summary_born_lever_puller)
             .build();
 
         // Double it
@@ -773,7 +785,7 @@ impl Plugin for GamePlugin {
             )))
             .on_start(scenario_double_it_start)
             .on_update(scenario_double_it_update)
-            .on_end(scenario_double_it_end)
+            .on_end((scenario_double_it_end, update_summary_double_it))
             .build();
 
         // Thomas the tank engine
@@ -803,6 +815,7 @@ impl Plugin for GamePlugin {
                         4.0,
                         Transform::from_xyz(900.0, 445.0, 0.0),
                     )))
+            .on_end(update_summary_thomas_the_tank_engine)
             .build();
 
         // Youtube prank
@@ -820,7 +833,7 @@ impl Plugin for GamePlugin {
             .animation(standard_animation_track_a(Some("youtube-prank-youtubers-wounded")))
             .animation(standard_animation_track_b(Some("youtube-prank-dummy-wounded")))
             .on_start(scenario_youtube_prank_start)
-            .on_end(scenario_youtube_prank_end)
+            .on_end((scenario_youtube_prank_end, update_summary_youtube_prank))
             .build();
 
         // Self
@@ -835,7 +848,7 @@ impl Plugin for GamePlugin {
             ))
             .on_start(scenario_self_start)
             .on_update(scenario_self_update)
-            .on_end(scenario_self_end)
+            .on_end((update_summary_self, scenario_self_end).chain())
             .build();
 
         // Add scenarios

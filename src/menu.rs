@@ -47,6 +47,9 @@ pub fn setup_menu_screen(mut commands: Commands) {
 
     // Save the button
     commands.insert_resource(MenuEntityRes(button_entity));
+
+    // Insert the game summary resource
+    commands.insert_resource(GameSummary::new());
 }
 
 /// Updates the menu screen when the "Play" button is pressed.
