@@ -28,6 +28,13 @@ pub enum LeverState {
     Pulled,
 }
 
+impl LeverState {
+    /// Returns whether the lever state is pulled.
+    pub const fn pulled(&self) -> bool {
+        matches!(self, Self::Pulled)
+    }
+}
+
 /// The state of a scheduled animation.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States)]
 pub enum AnimationState {

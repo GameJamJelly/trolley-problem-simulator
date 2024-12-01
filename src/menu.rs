@@ -7,8 +7,8 @@ use bevy::prelude::*;
 
 /// Sets up the menu screen.
 pub fn setup_menu_screen(mut commands: Commands) {
-    // Spawn the play button
-    let button_entity = commands
+    // Spawn the menu screen text
+    let text_entity = commands
         .spawn(NodeBundle {
             background_color: Color::WHITE.into(),
             style: Style {
@@ -22,31 +22,60 @@ pub fn setup_menu_screen(mut commands: Commands) {
         })
         .with_children(|parent| {
             parent
-                .spawn(ButtonBundle {
+                .spawn(NodeBundle {
                     style: Style {
-                        padding: UiRect::all(Val::Px(16.0)),
+                        width: Val::Percent(75.0),
+                        flex_direction: FlexDirection::Column,
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
+                        row_gap: Val::Px(32.0),
                         ..default()
                     },
-                    background_color: NORMAL_BUTTON_COLOR.into(),
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Play",
-                        TextStyle {
-                            font_size: 40.0,
-                            color: Color::srgb(1.0, 1.0, 1.0),
+                    parent.spawn(
+                        TextBundle::from_section(
+                            "Trolley Problem Simulator",
+                            TextStyle {
+                                color: Color::BLACK,
+                                font_size: 64.0,
+                                ..default()
+                            },
+                        )
+                        .with_text_justify(JustifyText::Center),
+                    );
+
+                    parent
+                        .spawn(ButtonBundle {
+                            style: Style {
+                                padding: UiRect::all(Val::Px(16.0)),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                ..default()
+                            },
+                            background_color: NORMAL_BUTTON_COLOR.into(),
                             ..default()
-                        },
-                    ));
+                        })
+                        .with_children(|parent| {
+                            parent.spawn(TextBundle::from_section(
+                                "Play",
+                                TextStyle {
+                                    font_size: 40.0,
+                                    color: Color::srgb(1.0, 1.0, 1.0),
+                                    ..default()
+                                },
+                            ));
+                        });
                 });
         })
         .id();
 
     // Save the button
-    commands.insert_resource(MenuEntityRes(button_entity));
+    commands.insert_resource(MenuEntityRes(text_entity));
+
+    // Insert the game summary resource
+    commands.insert_resource(GameSummary::new());
 }
 
 /// Updates the menu screen when the "Play" button is pressed.

@@ -18,6 +18,7 @@ mod menu;
 mod resources;
 mod scenario;
 mod states;
+mod summary;
 mod util;
 
 use crate::game::*;

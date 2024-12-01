@@ -58,3 +58,6 @@ pub const NEXT_PERSON_SWITCH_TRANSFORM: Transform = Transform::from_xyz(650.0, 3
 
 /// The transform for the player when they jump onto the track.
 pub const SELF_JUMP_TRANSFORM: Transform = Transform::from_xyz(285.0, 245.0, -10.0);
+
+/// A bullet point character.
+pub const BULLET_POINT: char = '-';
