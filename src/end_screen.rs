@@ -1,12 +1,20 @@
 //! The end screen.
 
+use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
+use bevy::audio::PlaybackMode;
+use bevy::audio::Volume;
 use bevy::prelude::*;
 
 /// Sets up the end screen.
-pub fn setup_end_screen(mut commands: Commands, summary: Res<GameSummary>) {
+pub fn setup_end_screen(
+    mut commands: Commands,
+    summary: Res<GameSummary>,
+    music: Query<&AudioSink, With<GameMusic>>,
+    music_assets: Res<MusicAssetMap>,
+) {
     let mut summary_text_sections = Vec::new();
 
     summary_text_sections.push(format!("Killed {} people", summary.people_killed));
@@ -68,6 +76,20 @@ pub fn setup_end_screen(mut commands: Commands, summary: Res<GameSummary>) {
     summary_text_sections
         .iter_mut()
         .for_each(|line| *line = format!("{} {}", BULLET_POINT, line));
+
+    // Pause the game music
+    music.single().pause();
+
+    // Play the win music
+    let win_music = music_assets.get_by_name("win");
+    commands.spawn(AudioBundle {
+        source: win_music,
+        settings: PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            volume: Volume::new(GAME_VOLUME),
+            ..default()
+        },
+    });
 
     // Spawn the end screen text
     let text_entity = commands

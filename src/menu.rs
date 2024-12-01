@@ -12,7 +12,7 @@ use bevy::prelude::*;
 pub fn setup_menu_screen(
     mut commands: Commands,
     music_assets: Res<MusicAssetMap>,
-    music: Query<(), With<GameMusic>>,
+    music: Query<&AudioSink, With<GameMusic>>,
 ) {
     // Spawn the menu screen text
     let text_entity = commands
@@ -98,6 +98,8 @@ pub fn setup_menu_screen(
             },
             GameMusic,
         ));
+    } else {
+        music.single().play();
     }
 }
 
