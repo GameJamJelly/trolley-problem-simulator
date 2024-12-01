@@ -211,6 +211,7 @@ pub fn scenario_setup(
 
 /// Updates a scenario every game tick.
 pub fn scenario_update(
+    mut commands: Commands,
     time: Res<Time>,
     mut timer: ResMut<ScenarioTimer>,
     mut timer_text: Query<&mut Text, With<TimerText>>,
@@ -221,6 +222,8 @@ pub fn scenario_update(
     mut next_animation_state: ResMut<NextState<AnimationState>>,
     scenarios_config: Res<ScenariosConfigRes>,
     scenario_index_state: Res<State<ScenarioIndexState>>,
+    audio_assets: Res<AudioAssetMap>,
+    mut scenario_entities: ResMut<ScenarioEntitiesRes>,
 ) {
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
@@ -238,6 +241,26 @@ pub fn scenario_update(
     // Update the timer text
     timer_text.single_mut().sections[0].value =
         format_timer_text(timer.remaining().max(Duration::from_secs(0)));
+
+    // Trigger the trolley approaching sound.
+    if time_remaining_reached(previous_time_remaining, current_time_remaining, 9.0) {
+        let trolley_approaching_audio = audio_assets.get_by_name("train-approaching");
+        let trolley_approaching_audio_entity = commands
+            .spawn((
+                AudioBundle {
+                    source: trolley_approaching_audio,
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Once,
+                        volume: Volume::new(GAME_VOLUME),
+                        speed: 1.5,
+                        ..default()
+                    },
+                },
+                TrolleyApproachingAudio,
+            ))
+            .id();
+        scenario_entities.push(trolley_approaching_audio_entity);
+    }
 
     // Trigger the trolley to turn slightly
     if time_remaining_reached(previous_time_remaining, current_time_remaining, 3.0)

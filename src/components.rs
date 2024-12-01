@@ -53,3 +53,7 @@ pub struct OtherHostagesTexture;
 /// The game music component.
 #[derive(Component)]
 pub struct GameMusic;
+
+/// The trolley approaching audio component.
+#[derive(Component)]
+pub struct TrolleyApproachingAudio;

@@ -83,6 +83,7 @@ fn show_wounded_track_a(
     image_assets: Res<ImageAssetMap>,
     audio_assets: Res<AudioAssetMap>,
     music: Query<&AudioSink, With<GameMusic>>,
+    trolley_approaching: Query<&AudioSink, With<TrolleyApproachingAudio>>,
 ) {
     let this_scenario = &scenarios_config[scenario_index.unwrap()];
     let this_scenario_animations = &animation_config[scenario_index.unwrap()];
@@ -109,6 +110,7 @@ fn show_wounded_track_a(
 
         if let Some(duration) = this_scenario.pause_music_during_hostages_a_scream {
             music.single().pause();
+            trolley_approaching.single().pause();
             commands.insert_resource(GameMusicPauseTimerRes(Timer::new(
                 Duration::from_secs_f32(duration),
                 TimerMode::Once,
@@ -128,6 +130,7 @@ fn show_wounded_track_b(
     image_assets: Res<ImageAssetMap>,
     audio_assets: Res<AudioAssetMap>,
     music: Query<&AudioSink, With<GameMusic>>,
+    trolley_approaching: Query<&AudioSink, With<TrolleyApproachingAudio>>,
 ) {
     let this_scenario = &scenarios_config[scenario_index.unwrap()];
     let this_scenario_animations = &animation_config[scenario_index.unwrap()];
@@ -154,6 +157,7 @@ fn show_wounded_track_b(
 
         if let Some(duration) = this_scenario.pause_music_during_hostages_b_scream {
             music.single().pause();
+            trolley_approaching.single().pause();
             commands.insert_resource(GameMusicPauseTimerRes(Timer::new(
                 Duration::from_secs_f32(duration),
                 TimerMode::Once,
