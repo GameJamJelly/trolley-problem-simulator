@@ -5,8 +5,10 @@ use bevy::prelude::*;
 /// The state of the game.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, States)]
 pub enum GameState {
-    /// The player is in the menu screen.
+    /// The game is initializing.
     #[default]
+    Initializing,
+    /// The player is in the menu screen.
     InMenu,
     /// The player is playing the game scenarios.
     Playing,

@@ -10,6 +10,10 @@ use std::collections::HashMap;
 pub struct AssetMapPaths {
     /// List of image asset paths.
     pub image_asset_paths: Vec<String>,
+    /// List of audio asset paths.
+    pub audio_asset_paths: Vec<String>,
+    /// List of music asset paths.
+    pub music_asset_paths: Vec<String>,
 }
 
 /// A map of image asset paths to their corresponding handles.
@@ -26,6 +30,40 @@ impl ImageAssetMap {
     /// `assets/images/` and is a PNG.
     pub fn get_by_name(&self, name: &str) -> Handle<Image> {
         self.get_by_path(&format!("assets/images/{}.png", name))
+    }
+}
+
+/// A map of audio asset paths to their corresponding handles.
+#[derive(Resource, Deref, DerefMut)]
+pub struct AudioAssetMap(pub HashMap<String, Handle<AudioSource>>);
+
+impl AudioAssetMap {
+    /// Gets an audio asset by its full path.
+    pub fn get_by_path(&self, path: &str) -> Handle<AudioSource> {
+        self.0.get(path).unwrap().clone()
+    }
+
+    /// Gets an audio asset by its name. This assumes that the audio is in
+    /// `assets/sounds/` and is an MP3.
+    pub fn get_by_name(&self, name: &str) -> Handle<AudioSource> {
+        self.get_by_path(&format!("assets/sounds/{}.mp3", name))
+    }
+}
+
+/// A map of music asset paths to their corresponding handles.
+#[derive(Resource, Deref, DerefMut)]
+pub struct MusicAssetMap(pub HashMap<String, Handle<AudioSource>>);
+
+impl MusicAssetMap {
+    /// Gets a music asset by its full path.
+    pub fn get_by_path(&self, path: &str) -> Handle<AudioSource> {
+        self.0.get(path).unwrap().clone()
+    }
+
+    /// Gets a music asset by its name. This assumes that the music is in
+    /// `assets/music/` and is an MP3.
+    pub fn get_by_name(&self, name: &str) -> Handle<AudioSource> {
+        self.get_by_path(&format!("assets/music/{}.mp3", name))
     }
 }
 

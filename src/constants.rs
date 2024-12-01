@@ -61,3 +61,6 @@ pub const SELF_JUMP_TRANSFORM: Transform = Transform::from_xyz(285.0, 245.0, -10
 
 /// A bullet point character.
 pub const BULLET_POINT: char = '-';
+
+/// The audio volume.
+pub const GAME_VOLUME: f32 = 0.5;

@@ -488,14 +488,11 @@ impl Plugin for GamePlugin {
         ));
 
         // Insert stateful values
-        app.insert_state(GameState::InMenu)
+        app.insert_state(GameState::Initializing)
             .insert_state(ScenarioIndexState(None))
             .insert_state(LeverState::Normal);
 
-        // Add game setup and menu screen systems.
-        // Because the first two are chained, the user cannot possibly proceed
-        // before all assets are loaded, since the "Play" button won't be shown
-        // until then.
+        // Add game setup and menu screen systems
         app.add_systems(Startup, setup_game);
         app.add_systems(OnEnter(GameState::InMenu), setup_menu_screen);
         app.add_systems(

@@ -1,12 +1,19 @@
 //! The menu screen.
 
+use crate::components::*;
 use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
+use bevy::audio::PlaybackMode;
+use bevy::audio::Volume;
 use bevy::prelude::*;
 
 /// Sets up the menu screen.
-pub fn setup_menu_screen(mut commands: Commands) {
+pub fn setup_menu_screen(
+    mut commands: Commands,
+    music_assets: Res<MusicAssetMap>,
+    music: Query<(), With<GameMusic>>,
+) {
     // Spawn the menu screen text
     let text_entity = commands
         .spawn(NodeBundle {
@@ -76,6 +83,22 @@ pub fn setup_menu_screen(mut commands: Commands) {
 
     // Insert the game summary resource
     commands.insert_resource(GameSummary::new());
+
+    // Spawn the game music
+    if music.is_empty() {
+        let game_music = music_assets.get_by_name("trolley-main");
+        commands.spawn((
+            AudioBundle {
+                source: game_music,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Loop,
+                    volume: Volume::new(GAME_VOLUME),
+                    ..default()
+                },
+            },
+            GameMusic,
+        ));
+    }
 }
 
 /// Updates the menu screen when the "Play" button is pressed.

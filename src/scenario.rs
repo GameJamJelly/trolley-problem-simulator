@@ -6,6 +6,7 @@ use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
 use crate::util::*;
+use bevy::audio::{PlaybackMode, Volume};
 use bevy::ecs::schedule::SystemConfigs;
 use bevy::input::common_conditions::*;
 use bevy::prelude::*;
@@ -281,6 +282,7 @@ pub fn scenario_update(
 
 /// Handles click events in a scenario.
 pub fn scenario_handle_click(
+    mut commands: Commands,
     windows: Query<&Window, With<PrimaryWindow>>,
     lever_state: Res<State<LeverState>>,
     mut next_lever_state: ResMut<NextState<LeverState>>,
@@ -291,6 +293,7 @@ pub fn scenario_handle_click(
     scenarios_config: Res<ScenariosConfigRes>,
     scenario_index_state: Res<State<ScenarioIndexState>>,
     image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
 ) {
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
@@ -304,11 +307,21 @@ pub fn scenario_handle_click(
         .lever_switched_texture
         .as_ref()
         .map(|texture| image_assets.get_by_name(texture));
+    let switch_audio = audio_assets.get_by_name("switch");
 
     let lever_rect = Rect::new(346.0, 135.0, 410.0, 202.0);
 
     if let Some(mouse_pos) = windows.single().cursor_position() {
         if lever_rect.contains(mouse_pos) {
+            commands.spawn(AudioBundle {
+                source: switch_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    ..default()
+                },
+            });
+
             match lever_state.get() {
                 LeverState::Normal => {
                     if let Some(tracks_texture) = tracks_switched_texture {
