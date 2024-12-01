@@ -8,49 +8,50 @@ use bevy::ecs::schedule::SystemConfigs;
 use bevy::prelude::*;
 use std::sync::{Arc, Mutex};
 
-/// A linear animation transformation. Does not perform rotations. This is the
-/// default animation function.
-pub const fn linear_animation(
+/// A linear animation transformation. This is the default animation function.
+pub fn linear_animation(
     start_transform: Transform,
     end_transform: Transform,
     progress: f32,
 ) -> Transform {
     let start_point_x = start_transform.translation.x;
     let start_point_y = start_transform.translation.y;
+    let start_rotation = start_transform.rotation.z;
     let start_scale = start_transform.scale.x;
     let end_point_x = end_transform.translation.x;
     let end_point_y = end_transform.translation.y;
+    let end_rotation = end_transform.rotation.z;
     let end_scale = end_transform.scale.x;
 
     let transformed_x = point_between(start_point_x, end_point_x, progress);
     let transformed_y = point_between(start_point_y, end_point_y, progress);
+    let transformed_rotation = point_between(start_rotation, end_rotation, progress);
     let transformed_scale = point_between(start_scale, end_scale, progress);
 
     Transform::IDENTITY
-        .with_translation(normalize_translation_to_canvas(Vec2::new(
-            transformed_x,
-            transformed_y,
-        )))
+        .with_translation(Vec3::new(transformed_x, transformed_y, 0.0))
+        .with_rotation(Quat::from_rotation_z(transformed_rotation))
         .with_scale(Vec3::new(transformed_scale, transformed_scale, 1.0))
 }
 
 /// Sets the animation index state once [`AnimationState::Running`] is entered.
 fn set_animation_index_state(
+    scenario_index_state: Res<State<ScenarioIndexState>>,
     mut next_animation_index_state: ResMut<NextState<AnimationIndexState>>,
     mut next_animation_node_index_state: ResMut<NextState<AnimationNodeIndexState>>,
     animation_config: Res<AnimationConfigRes>,
     lever_state: Res<State<LeverState>>,
 ) {
+    let scenario_index = scenario_index_state.unwrap();
+
     next_animation_node_index_state.set(AnimationNodeIndexState(Some(0)));
 
-    for scenario_animations in &animation_config.0 {
-        for (animation_index, animation) in scenario_animations.iter().enumerate() {
-            if match animation.lever_state_condition {
-                Some(desired_state) => desired_state == **lever_state,
-                None => true,
-            } {
-                next_animation_index_state.set(AnimationIndexState(Some(animation_index)));
-            }
+    for (animation_index, animation) in animation_config.0[scenario_index].iter().enumerate() {
+        if match animation.lever_state_condition {
+            Some(desired_state) => desired_state == **lever_state,
+            None => true,
+        } {
+            next_animation_index_state.set(AnimationIndexState(Some(animation_index)));
         }
     }
 }
@@ -120,7 +121,7 @@ fn animation_update(
     let progress = 1.0 - (animation_section_timer.remaining_secs() / this_node.duration);
 
     let new_transform = (this_node.animation_fn)(from_transform, this_node.transform, progress);
-    *trolley_transform.single_mut() = new_transform;
+    *trolley_transform.single_mut() = normalize_transform_to_canvas(new_transform);
 }
 
 /// A wrapper around an animation function.
@@ -201,6 +202,8 @@ pub struct Animation {
     start_action: Option<SystemConfigs>,
     /// The collection of animation nodes.
     nodes: Vec<AnimationNode>,
+    /// The optional wounded texture.
+    wounded_texture: Option<String>,
 }
 
 impl Animation {
@@ -211,6 +214,7 @@ impl Animation {
             start_transform,
             start_action: None,
             nodes: Vec::new(),
+            wounded_texture: None,
         }
     }
 
@@ -230,6 +234,12 @@ impl Animation {
     /// Adds a new node to the animation.
     pub fn node(mut self, node: AnimationNode) -> Self {
         self.nodes.push(node);
+        self
+    }
+
+    /// Configures the wounded texture.
+    pub fn with_wounded_texture(mut self, wounded_texture: &str) -> Self {
+        self.wounded_texture = Some(wounded_texture.to_owned());
         self
     }
 }
@@ -277,6 +287,7 @@ impl Plugin for AnimationCollectionPlugin {
                                             animation_fn: node.animation_fn.clone(),
                                         })
                                         .collect(),
+                                    wounded_texture: animation.wounded_texture.clone(),
                                 },
                                 animation,
                             )

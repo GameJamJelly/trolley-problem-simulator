@@ -36,21 +36,23 @@ pub struct ScenarioConfig {
     /// The scenario duration.
     pub duration: f32,
     /// The position of hostages on track A.
-    pub hostages_track_a_pos: Vec2,
+    pub hostages_track_a_pos: Option<Vec2>,
     /// The position of hostages on track B.
-    pub hostages_track_b_pos: Vec2,
+    pub hostages_track_b_pos: Option<Vec2>,
     /// The name of the normal track texture.
     pub tracks_normal_texture: String,
     /// The name of the switched track texture.
-    pub tracks_switched_texture: String,
+    pub tracks_switched_texture: Option<String>,
     /// The name of the normal lever/player texture.
     pub lever_normal_texture: String,
     /// The name of the switched lever/player texture.
-    pub lever_switched_texture: String,
+    pub lever_switched_texture: Option<String>,
     /// The name of the track A hostages texture.
-    pub hostages_track_a_normal_texture: String,
+    pub hostages_track_a_normal_texture: Option<String>,
     /// The name of the track B hostages texture.
-    pub hostages_track_b_normal_texture: String,
+    pub hostages_track_b_normal_texture: Option<String>,
+    /// The overridden trolley texture.
+    pub trolley_texture_override: Option<String>,
 }
 
 /// Scenarios configuration resource.
@@ -88,6 +90,8 @@ pub struct AnimationConfig {
     pub start_transform: Transform,
     /// The collection of animation nodes.
     pub nodes: Vec<AnimationNodeConfig>,
+    /// The optional wounded texture.
+    pub wounded_texture: Option<String>,
 }
 
 /// Resource containing animation configuration for all scenarios.
@@ -109,6 +113,10 @@ pub struct MenuEntityRes(pub Entity);
 /// The resource containing entities spawned for a scenario.
 #[derive(Resource, Deref, DerefMut)]
 pub struct ScenarioEntitiesRes(pub Vec<Entity>);
+
+/// The resource containing extra entities spawned for a scenario.
+#[derive(Resource, Deref, DerefMut)]
+pub struct ScenarioExtraEntitiesRes(pub Vec<Entity>);
 
 /// The resource containing the UI entity spawned for the end screen.
 #[derive(Resource, Deref, DerefMut)]
@@ -149,3 +157,35 @@ pub struct TrolleyTurnRes(pub Handle<Image>);
 /// The resource for the side-facing trolley texture.
 #[derive(Resource, Deref, DerefMut)]
 pub struct TrolleySideRes(pub Handle<Image>);
+
+/// The resource for the lever-pulled turning trolley texture.
+#[derive(Resource, Deref, DerefMut)]
+pub struct TrolleySwitchedRes(pub Handle<Image>);
+
+/// The double it next person's switch timer resource.
+#[derive(Resource, Deref, DerefMut)]
+pub struct NextPersonSwitchTimerRes(pub Timer);
+
+/// The resource containing the next person's switch state.
+#[derive(Resource, Deref, DerefMut)]
+pub struct NextPersonSwitchRes(pub bool);
+
+/// The marker resource to indicate that the next switch has been reached.
+#[derive(Resource)]
+pub struct NextSwitchReachedRes;
+
+/// A resource to time when the other hostages texture swap should happen.
+#[derive(Resource, Deref, DerefMut)]
+pub struct OtherHostagesTextureSwapTimerRes(pub Timer);
+
+/// A resource tracking whether the player is jumping onto the track.
+#[derive(Resource, Default, PartialEq)]
+pub enum SelfJumping {
+    /// The player has not jumped.
+    #[default]
+    NotJumping,
+    /// The player has jumped.
+    Jumping,
+    /// The player has been run over.
+    RunOver,
+}

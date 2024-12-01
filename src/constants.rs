@@ -46,3 +46,15 @@ pub const APPROACHING_TROLLEY_TURNING_END_TRANSFORM: Transform = Transform::IDEN
 pub const APPROACHING_TROLLEY_SIDE_END_TRANSFORM: Transform = Transform::IDENTITY
     .with_translation(Vec3::new(298.0, 229.0, 0.0))
     .with_scale(Vec3::new(1.0, 1.0, 1.0));
+
+/// The standard position of hostages on track A.
+pub const STANDARD_HOSTAGES_POS_TRACK_A: Vec2 = Vec2::new(530.0, 325.0);
+
+/// The standard position of hostages on track B.
+pub const STANDARD_HOSTAGES_POS_TRACK_B: Vec2 = Vec2::new(550.0, 230.0);
+
+/// The transform for the double it next person's switch.
+pub const NEXT_PERSON_SWITCH_TRANSFORM: Transform = Transform::from_xyz(650.0, 380.0, 0.0);
+
+/// The transform for the player when they jump onto the track.
+pub const SELF_JUMP_TRANSFORM: Transform = Transform::from_xyz(285.0, 245.0, -10.0);

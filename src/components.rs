@@ -25,3 +25,27 @@ pub struct TrolleyTexture;
 /// The scenario timer text component.
 #[derive(Component)]
 pub struct TimerText;
+
+/// The Youtube tripod texture component.
+#[derive(Component)]
+pub struct TripodTexture;
+
+/// The cliff texture component.
+#[derive(Component)]
+pub struct CliffTexture;
+
+/// The track texture component for the right half of the double it scenario.
+#[derive(Component)]
+pub struct DoubleItRightHalfTrackTexture;
+
+/// The double hostages texture.
+#[derive(Component)]
+pub struct DoubleItHostagesTexture;
+
+/// The next person texture.
+#[derive(Component)]
+pub struct NextPersonTexture;
+
+/// The texture for the other hostages.
+#[derive(Component)]
+pub struct OtherHostagesTexture;
