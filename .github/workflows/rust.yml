@@ -53,17 +53,35 @@ jobs:
         with:
           path: dist/
 
-  deploy:
+  deploy-github-pages:
     runs-on: ubuntu-latest
     needs: build
+
     permissions:
       pages: write
       id-token: write
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     if: github.ref == 'refs/heads/main'
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-itch-io:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: yeslayla/butler-publish-itchio-action@v1.0.3
+        env:
+          BUTLER_CREDENTIALS: ${{ secrets.ITCH_IO_API_KEY }}
+          CHANNEL: HTML
+          ITCH_GAME: trolley-problem-simulator
+          ITCH_USER: WKHAllen
+          PACKAGE: dist
