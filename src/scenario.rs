@@ -414,6 +414,16 @@ fn goto_end_scenario(mut next_game_state: ResMut<NextState<GameState>>) {
         self.trolley_texture_override = Some(texture.into());
     }
 
+    /// Overrides the track A hostages scream sound.
+    pub fn override_hostages_a_scream_sound(&mut self, sound: impl Into<String>) {
+        self.hostages_a_scream_sound_override = Some(sound.into());
+    }
+
+    /// Overrides the track B hostages scream sound.
+    pub fn override_hostages_b_scream_sound(&mut self, sound: impl Into<String>) {
+        self.hostages_b_scream_sound_override = Some(sound.into());
+    }
+
     /// Configures a system to run when the scenario begins.
     pub fn on_start<M>(&mut self, system: impl IntoSystemConfigs<M>) {
         self.on_start = Some(system.into_configs());
@@ -462,6 +472,18 @@ pub struct Scenario {
     /// An optional override on the trolley texture.
     #[builder(default, via_mutators)]
     trolley_texture_override: Option<String>,
+    /// An optional override on the track A hostages scream sound.
+    #[builder(default, via_mutators)]
+    hostages_a_scream_sound_override: Option<String>,
+    /// An optional override on the track B hostages scream sound.
+    #[builder(default, via_mutators)]
+    hostages_b_scream_sound_override: Option<String>,
+    /// Whether to pause the music while the track A hostage scream plays.
+    #[builder(default, setter(strip_option))]
+    pause_music_during_hostages_a_scream: Option<f32>,
+    /// Whether to pause the music while the track B hostage scream plays.
+    #[builder(default, setter(strip_option))]
+    pause_music_during_hostages_b_scream: Option<f32>,
     /// The collection of scenario animations.
     #[builder(default, via_mutators)]
     animations: Vec<Animation>,
@@ -521,6 +543,14 @@ impl Plugin for ScenarioCollectionPlugin {
                             hostages_track_b_normal_texture: scenario
                                 .hostages_track_b_normal_texture,
                             trolley_texture_override: scenario.trolley_texture_override,
+                            hostages_a_scream_sound_override: scenario
+                                .hostages_a_scream_sound_override,
+                            hostages_b_scream_sound_override: scenario
+                                .hostages_b_scream_sound_override,
+                            pause_music_during_hostages_a_scream: scenario
+                                .pause_music_during_hostages_a_scream,
+                            pause_music_during_hostages_b_scream: scenario
+                                .pause_music_during_hostages_b_scream,
                         },
                         (
                             scenario.animations,

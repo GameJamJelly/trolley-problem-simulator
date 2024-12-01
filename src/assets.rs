@@ -153,6 +153,7 @@ impl Plugin for EmbeddedAssetPlugin {
 
         let audio_asset_paths = insert_embedded_assets!(
             app,
+            "../assets/sounds/blue-lobster.mp3",
             "../assets/sounds/crash.mp3",
             "../assets/sounds/scream-1.mp3",
             "../assets/sounds/scream-2.mp3",
@@ -181,13 +182,12 @@ impl Plugin for EmbeddedAssetPlugin {
             "../assets/sounds/self-scream.mp3",
             "../assets/sounds/squash.mp3",
             "../assets/sounds/switch.mp3",
+            "../assets/sounds/thomas-theme.mp3",
             "../assets/sounds/train-approaching.mp3",
         );
 
         let music_asset_paths = insert_embedded_assets!(
             app,
-            "../assets/music/blue-lobster.mp3",
-            "../assets/music/thomas-theme.mp3",
             "../assets/music/trolley-main.mp3",
             "../assets/music/win.mp3",
         );

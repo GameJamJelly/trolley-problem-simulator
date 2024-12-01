@@ -57,46 +57,34 @@ fn turn_trolley_switched_end(
     *trolley_texture.single_mut() = trolley_side_texture.clone();
 }
 
+/// Resumes the game music after the timer expires.
+fn resume_music(
+    mut commands: Commands,
+    time: Res<Time>,
+    timer: Option<ResMut<GameMusicPauseTimerRes>>,
+    music: Query<&AudioSink, With<GameMusic>>,
+) {
+    if let Some(mut timer) = timer {
+        if timer.tick(time.delta()).just_finished() {
+            music.single().play();
+            commands.remove_resource::<GameMusicPauseTimerRes>();
+        }
+    }
+}
+
 /// Displays the configured wounded texture on track A when appropriate.
 fn show_wounded_track_a(
     mut commands: Commands,
+    scenarios_config: Res<ScenariosConfigRes>,
     animation_config: Res<AnimationConfigRes>,
     scenario_index: Res<State<ScenarioIndexState>>,
     animation_index: Res<State<AnimationIndexState>>,
     mut hostage_texture: Query<&mut Handle<Image>, With<HostagesTrackATexture>>,
     image_assets: Res<ImageAssetMap>,
     audio_assets: Res<AudioAssetMap>,
+    music: Query<&AudioSink, With<GameMusic>>,
 ) {
-    let this_scenario_animations = &animation_config[scenario_index.unwrap()];
-    let this_animation = &this_scenario_animations[animation_index.unwrap()];
-    let scream_audio =
-        audio_assets.get_by_name(&format!("scream-{}", (rand::random::<usize>() % 24) + 1));
-
-    if let Some(wounded_texture_name) = &this_animation.wounded_texture {
-        let wounded_texture = image_assets.get_by_name(wounded_texture_name);
-        *hostage_texture.single_mut() = wounded_texture;
-    }
-
-    commands.spawn(AudioBundle {
-        source: scream_audio,
-        settings: PlaybackSettings {
-            mode: PlaybackMode::Despawn,
-            volume: Volume::new(GAME_VOLUME),
-            ..default()
-        },
-    });
-}
-
-/// Displays the configured wounded texture on track B when appropriate.
-fn show_wounded_track_b(
-    mut commands: Commands,
-    animation_config: Res<AnimationConfigRes>,
-    scenario_index: Res<State<ScenarioIndexState>>,
-    animation_index: Res<State<AnimationIndexState>>,
-    mut hostage_texture: Query<&mut Handle<Image>, With<HostagesTrackBTexture>>,
-    image_assets: Res<ImageAssetMap>,
-    audio_assets: Res<AudioAssetMap>,
-) {
+    let this_scenario = &scenarios_config[scenario_index.unwrap()];
     let this_scenario_animations = &animation_config[scenario_index.unwrap()];
     let this_animation = &this_scenario_animations[animation_index.unwrap()];
 
@@ -104,8 +92,12 @@ fn show_wounded_track_b(
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
 
-        let scream_audio =
-            audio_assets.get_by_name(&format!("scream-{}", (rand::random::<usize>() % 24) + 1));
+        let scream_audio_name = match &this_scenario.hostages_a_scream_sound_override {
+            Some(sound_name) => sound_name.clone(),
+            None => format!("scream-{}", (rand::random::<usize>() % 24) + 1),
+        };
+
+        let scream_audio = audio_assets.get_by_name(&scream_audio_name);
         commands.spawn(AudioBundle {
             source: scream_audio,
             settings: PlaybackSettings {
@@ -114,6 +106,59 @@ fn show_wounded_track_b(
                 ..default()
             },
         });
+
+        if let Some(duration) = this_scenario.pause_music_during_hostages_a_scream {
+            music.single().pause();
+            commands.insert_resource(GameMusicPauseTimerRes(Timer::new(
+                Duration::from_secs_f32(duration),
+                TimerMode::Once,
+            )));
+        }
+    }
+}
+
+/// Displays the configured wounded texture on track B when appropriate.
+fn show_wounded_track_b(
+    mut commands: Commands,
+    scenarios_config: Res<ScenariosConfigRes>,
+    animation_config: Res<AnimationConfigRes>,
+    scenario_index: Res<State<ScenarioIndexState>>,
+    animation_index: Res<State<AnimationIndexState>>,
+    mut hostage_texture: Query<&mut Handle<Image>, With<HostagesTrackBTexture>>,
+    image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
+    music: Query<&AudioSink, With<GameMusic>>,
+) {
+    let this_scenario = &scenarios_config[scenario_index.unwrap()];
+    let this_scenario_animations = &animation_config[scenario_index.unwrap()];
+    let this_animation = &this_scenario_animations[animation_index.unwrap()];
+
+    if let Some(wounded_texture_name) = &this_animation.wounded_texture {
+        let wounded_texture = image_assets.get_by_name(wounded_texture_name);
+        *hostage_texture.single_mut() = wounded_texture;
+
+        let scream_audio_name = match &this_scenario.hostages_b_scream_sound_override {
+            Some(sound_name) => sound_name.clone(),
+            None => format!("scream-{}", (rand::random::<usize>() % 24) + 1),
+        };
+
+        let scream_audio = audio_assets.get_by_name(&scream_audio_name);
+        commands.spawn(AudioBundle {
+            source: scream_audio,
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::new(GAME_VOLUME),
+                ..default()
+            },
+        });
+
+        if let Some(duration) = this_scenario.pause_music_during_hostages_b_scream {
+            music.single().pause();
+            commands.insert_resource(GameMusicPauseTimerRes(Timer::new(
+                Duration::from_secs_f32(duration),
+                TimerMode::Once,
+            )));
+        }
     }
 }
 
@@ -464,16 +509,19 @@ fn scenario_self_start(mut commands: Commands) {
 
 /// Self update system.
 fn scenario_self_update(
+    mut commands: Commands,
     buttons: Res<ButtonInput<MouseButton>>,
     mut jumping: ResMut<SelfJumping>,
     animation_state: Res<State<AnimationState>>,
     image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
     mut self_texture: Query<(&mut Handle<Image>, &mut Transform), With<LeverPlayerTexture>>,
 ) {
     match **animation_state {
         AnimationState::Waiting => {
             if buttons.just_pressed(MouseButton::Left) {
                 *jumping = SelfJumping::Jumping;
+
                 let player_texture = image_assets.get_by_name("self");
                 *self_texture.single_mut().0 = player_texture;
                 *self_texture.single_mut().1 = normalize_transform_to_canvas(SELF_JUMP_TRANSFORM);
@@ -482,9 +530,20 @@ fn scenario_self_update(
         AnimationState::Running => {
             if *jumping == SelfJumping::Jumping {
                 *jumping = SelfJumping::RunOver;
+
                 let player_texture = image_assets.get_by_name("self-wounded");
                 *self_texture.single_mut().0 = player_texture;
                 *self_texture.single_mut().1 = normalize_transform_to_canvas(SELF_JUMP_TRANSFORM);
+
+                let scream_audio = audio_assets.get_by_name("self-scream");
+                commands.spawn(AudioBundle {
+                    source: scream_audio,
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Despawn,
+                        volume: Volume::new(GAME_VOLUME),
+                        ..default()
+                    },
+                });
             }
         }
         AnimationState::Complete => {}
@@ -536,6 +595,9 @@ impl Plugin for GamePlugin {
             update_end_screen.run_if(in_state(GameState::EndScreen)),
         );
         app.add_systems(OnExit(GameState::EndScreen), cleanup_end_screen);
+
+        // Add system to resume music whenever paused
+        app.add_systems(Update, resume_music);
 
         // Original
         let scenario_original = Scenario::builder()
@@ -744,6 +806,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("lobster-hostage-5")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .override_hostages_a_scream_sound("blue-lobster")
+            .pause_music_during_hostages_a_scream(5.5)
             .animation(standard_animation_track_a(Some("lobster-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .on_end(update_summary_lobster)
@@ -822,6 +886,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("self-standing")
             .hostages_track_a_normal_texture("original-hostage-5")
             .override_trolley_texture("thomas-the-tank-engine")
+            .override_hostages_a_scream_sound("thomas-theme")
+            .pause_music_during_hostages_a_scream(4.0)
             .animation(
                 Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
                     .with_wounded_texture("original-hostage-5-wounded")

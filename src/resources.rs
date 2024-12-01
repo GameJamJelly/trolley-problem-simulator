@@ -91,6 +91,14 @@ pub struct ScenarioConfig {
     pub hostages_track_b_normal_texture: Option<String>,
     /// The overridden trolley texture.
     pub trolley_texture_override: Option<String>,
+    /// The overridden track A hostages scream sound.
+    pub hostages_a_scream_sound_override: Option<String>,
+    /// The overridden track B hostages scream sound.
+    pub hostages_b_scream_sound_override: Option<String>,
+    /// Whether to pause the music while the track B hostage scream plays.
+    pub pause_music_during_hostages_a_scream: Option<f32>,
+    /// Whether to pause the music while the track B hostage scream plays.
+    pub pause_music_during_hostages_b_scream: Option<f32>,
 }
 
 /// Scenarios configuration resource.
@@ -292,3 +300,7 @@ impl GameSummary {
         }
     }
 }
+
+/// A timer for pausing the game music.
+#[derive(Resource, Deref, DerefMut)]
+pub struct GameMusicPauseTimerRes(pub Timer);
