@@ -427,6 +427,47 @@ fn scenario_youtube_prank_end(mut commands: Commands, entities: Res<ScenarioExtr
     commands.remove_resource::<ScenarioExtraEntitiesRes>();
 }
 
+/// Self start system.
+fn scenario_self_start(mut commands: Commands) {
+    // Insert the self jumping resource
+    commands.insert_resource(SelfJumping::NotJumping);
+}
+
+/// Self update system.
+fn scenario_self_update(
+    buttons: Res<ButtonInput<MouseButton>>,
+    mut jumping: ResMut<SelfJumping>,
+    animation_state: Res<State<AnimationState>>,
+    image_assets: Res<ImageAssetMap>,
+    mut self_texture: Query<(&mut Handle<Image>, &mut Transform), With<LeverPlayerTexture>>,
+) {
+    match **animation_state {
+        AnimationState::Waiting => {
+            if buttons.just_pressed(MouseButton::Left) {
+                *jumping = SelfJumping::Jumping;
+                let player_texture = image_assets.get_by_name("self");
+                *self_texture.single_mut().0 = player_texture;
+                *self_texture.single_mut().1 = normalize_transform_to_canvas(SELF_JUMP_TRANSFORM);
+            }
+        }
+        AnimationState::Running => {
+            if *jumping == SelfJumping::Jumping {
+                *jumping = SelfJumping::RunOver;
+                let player_texture = image_assets.get_by_name("self-wounded");
+                *self_texture.single_mut().0 = player_texture;
+                *self_texture.single_mut().1 = normalize_transform_to_canvas(SELF_JUMP_TRANSFORM);
+            }
+        }
+        AnimationState::Complete => {}
+    }
+}
+
+/// Self end system.
+fn scenario_self_end(mut commands: Commands) {
+    // Remove the self jumping resource
+    commands.remove_resource::<SelfJumping>();
+}
+
 /// The plugin which orchestrates the game logic.
 pub struct GamePlugin;
 
@@ -782,7 +823,20 @@ impl Plugin for GamePlugin {
             .on_end(scenario_youtube_prank_end)
             .build();
 
-        // TODO: Self
+        // Self
+        let scenario_self = Scenario::builder()
+            .text("Nobody is in any danger. Do you jump in front of the moving trolley?")
+            .duration(10.0)
+            .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
+            .tracks_normal_texture("self-one-track")
+            .lever_normal_texture("self-standing")
+            .animation(Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM).node(
+                AnimationNode::new(6.0, Transform::from_xyz(900.0, 445.0, 0.0)),
+            ))
+            .on_start(scenario_self_start)
+            .on_update(scenario_self_update)
+            .on_end(scenario_self_end)
+            .build();
 
         // Add scenarios
         app.add_plugins(
@@ -803,6 +857,7 @@ impl Plugin for GamePlugin {
                 .scenario(scenario_double_it)
                 .scenario(scenario_thomas_the_tank_engine)
                 .scenario(scenario_youtube_prank)
+                .scenario(scenario_self)
                 .build(),
         );
     }

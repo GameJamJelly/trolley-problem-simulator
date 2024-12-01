@@ -177,3 +177,15 @@ pub struct NextSwitchReachedRes;
 /// A resource to time when the other hostages texture swap should happen.
 #[derive(Resource, Deref, DerefMut)]
 pub struct OtherHostagesTextureSwapTimerRes(pub Timer);
+
+/// A resource tracking whether the player is jumping onto the track.
+#[derive(Resource, Default, PartialEq)]
+pub enum SelfJumping {
+    /// The player has not jumped.
+    #[default]
+    NotJumping,
+    /// The player has jumped.
+    Jumping,
+    /// The player has been run over.
+    RunOver,
+}

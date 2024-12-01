@@ -55,3 +55,6 @@ pub const STANDARD_HOSTAGES_POS_TRACK_B: Vec2 = Vec2::new(550.0, 230.0);
 
 /// The transform for the double it next person's switch.
 pub const NEXT_PERSON_SWITCH_TRANSFORM: Transform = Transform::from_xyz(650.0, 380.0, 0.0);
+
+/// The transform for the player when they jump onto the track.
+pub const SELF_JUMP_TRANSFORM: Transform = Transform::from_xyz(285.0, 245.0, -10.0);
