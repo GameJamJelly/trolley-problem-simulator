@@ -11,6 +11,8 @@ use crate::scenario::*;
 use crate::states::*;
 use crate::summary::*;
 use crate::util::*;
+use bevy::audio::PlaybackMode;
+use bevy::audio::Volume;
 use bevy::prelude::*;
 use bevy::window::WindowResolution;
 use std::time::Duration;
@@ -57,28 +59,43 @@ fn turn_trolley_switched_end(
 
 /// Displays the configured wounded texture on track A when appropriate.
 fn show_wounded_track_a(
+    mut commands: Commands,
     animation_config: Res<AnimationConfigRes>,
     scenario_index: Res<State<ScenarioIndexState>>,
     animation_index: Res<State<AnimationIndexState>>,
     mut hostage_texture: Query<&mut Handle<Image>, With<HostagesTrackATexture>>,
     image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
 ) {
     let this_scenario_animations = &animation_config[scenario_index.unwrap()];
     let this_animation = &this_scenario_animations[animation_index.unwrap()];
+    let scream_audio =
+        audio_assets.get_by_name(&format!("scream-{}", (rand::random::<usize>() % 24) + 1));
 
     if let Some(wounded_texture_name) = &this_animation.wounded_texture {
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
     }
+
+    commands.spawn(AudioBundle {
+        source: scream_audio,
+        settings: PlaybackSettings {
+            mode: PlaybackMode::Despawn,
+            volume: Volume::new(GAME_VOLUME),
+            ..default()
+        },
+    });
 }
 
 /// Displays the configured wounded texture on track B when appropriate.
 fn show_wounded_track_b(
+    mut commands: Commands,
     animation_config: Res<AnimationConfigRes>,
     scenario_index: Res<State<ScenarioIndexState>>,
     animation_index: Res<State<AnimationIndexState>>,
     mut hostage_texture: Query<&mut Handle<Image>, With<HostagesTrackBTexture>>,
     image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
 ) {
     let this_scenario_animations = &animation_config[scenario_index.unwrap()];
     let this_animation = &this_scenario_animations[animation_index.unwrap()];
@@ -86,6 +103,17 @@ fn show_wounded_track_b(
     if let Some(wounded_texture_name) = &this_animation.wounded_texture {
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
+
+        let scream_audio =
+            audio_assets.get_by_name(&format!("scream-{}", (rand::random::<usize>() % 24) + 1));
+        commands.spawn(AudioBundle {
+            source: scream_audio,
+            settings: PlaybackSettings {
+                mode: PlaybackMode::Despawn,
+                volume: Volume::new(GAME_VOLUME),
+                ..default()
+            },
+        });
     }
 }
 
