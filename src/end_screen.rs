@@ -69,8 +69,8 @@ pub fn setup_end_screen(mut commands: Commands, summary: Res<GameSummary>) {
         .iter_mut()
         .for_each(|line| *line = format!("{} {}", BULLET_POINT, line));
 
-    // Spawn the back to menu button
-    let button_entity = commands
+    // Spawn the end screen text
+    let text_entity = commands
         .spawn(NodeBundle {
             background_color: Color::WHITE.into(),
             style: Style {
@@ -96,14 +96,17 @@ pub fn setup_end_screen(mut commands: Commands, summary: Res<GameSummary>) {
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn(TextBundle::from_section(
-                        "Congratulations! You:",
-                        TextStyle {
-                            color: Color::BLACK,
-                            font_size: 32.0,
-                            ..default()
-                        },
-                    ));
+                    parent.spawn(
+                        TextBundle::from_section(
+                            "Congratulations! You:",
+                            TextStyle {
+                                color: Color::BLACK,
+                                font_size: 32.0,
+                                ..default()
+                            },
+                        )
+                        .with_text_justify(JustifyText::Center),
+                    );
 
                     parent
                         .spawn(NodeBundle {
@@ -152,7 +155,7 @@ pub fn setup_end_screen(mut commands: Commands, summary: Res<GameSummary>) {
         .id();
 
     // Save the button
-    commands.insert_resource(EndScreenEntityRes(button_entity));
+    commands.insert_resource(EndScreenEntityRes(text_entity));
 }
 
 /// Updates the end screen when the "Play" button is pressed.
