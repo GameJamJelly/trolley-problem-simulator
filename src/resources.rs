@@ -10,6 +10,10 @@ use std::collections::HashMap;
 pub struct AssetMapPaths {
     /// List of image asset paths.
     pub image_asset_paths: Vec<String>,
+    /// List of audio asset paths.
+    pub audio_asset_paths: Vec<String>,
+    /// List of music asset paths.
+    pub music_asset_paths: Vec<String>,
 }
 
 /// A map of image asset paths to their corresponding handles.
@@ -26,6 +30,40 @@ impl ImageAssetMap {
     /// `assets/images/` and is a PNG.
     pub fn get_by_name(&self, name: &str) -> Handle<Image> {
         self.get_by_path(&format!("assets/images/{}.png", name))
+    }
+}
+
+/// A map of audio asset paths to their corresponding handles.
+#[derive(Resource, Deref, DerefMut)]
+pub struct AudioAssetMap(pub HashMap<String, Handle<AudioSource>>);
+
+impl AudioAssetMap {
+    /// Gets an audio asset by its full path.
+    pub fn get_by_path(&self, path: &str) -> Handle<AudioSource> {
+        self.0.get(path).unwrap().clone()
+    }
+
+    /// Gets an audio asset by its name. This assumes that the audio is in
+    /// `assets/sounds/` and is an MP3.
+    pub fn get_by_name(&self, name: &str) -> Handle<AudioSource> {
+        self.get_by_path(&format!("assets/sounds/{}.mp3", name))
+    }
+}
+
+/// A map of music asset paths to their corresponding handles.
+#[derive(Resource, Deref, DerefMut)]
+pub struct MusicAssetMap(pub HashMap<String, Handle<AudioSource>>);
+
+impl MusicAssetMap {
+    /// Gets a music asset by its full path.
+    pub fn get_by_path(&self, path: &str) -> Handle<AudioSource> {
+        self.0.get(path).unwrap().clone()
+    }
+
+    /// Gets a music asset by its name. This assumes that the music is in
+    /// `assets/music/` and is an MP3.
+    pub fn get_by_name(&self, name: &str) -> Handle<AudioSource> {
+        self.get_by_path(&format!("assets/music/{}.mp3", name))
     }
 }
 
@@ -53,6 +91,14 @@ pub struct ScenarioConfig {
     pub hostages_track_b_normal_texture: Option<String>,
     /// The overridden trolley texture.
     pub trolley_texture_override: Option<String>,
+    /// The overridden track A hostages scream sound.
+    pub hostages_a_scream_sound_override: Option<String>,
+    /// The overridden track B hostages scream sound.
+    pub hostages_b_scream_sound_override: Option<String>,
+    /// Whether to pause the music while the track B hostage scream plays.
+    pub pause_music_during_hostages_a_scream: Option<f32>,
+    /// Whether to pause the music while the track B hostage scream plays.
+    pub pause_music_during_hostages_b_scream: Option<f32>,
 }
 
 /// Scenarios configuration resource.
@@ -254,3 +300,7 @@ impl GameSummary {
         }
     }
 }
+
+/// A timer for pausing the game music.
+#[derive(Resource, Deref, DerefMut)]
+pub struct GameMusicPauseTimerRes(pub Timer);

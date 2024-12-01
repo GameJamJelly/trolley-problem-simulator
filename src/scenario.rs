@@ -6,6 +6,7 @@ use crate::constants::*;
 use crate::resources::*;
 use crate::states::*;
 use crate::util::*;
+use bevy::audio::{PlaybackMode, Volume};
 use bevy::ecs::schedule::SystemConfigs;
 use bevy::input::common_conditions::*;
 use bevy::prelude::*;
@@ -210,6 +211,7 @@ pub fn scenario_setup(
 
 /// Updates a scenario every game tick.
 pub fn scenario_update(
+    mut commands: Commands,
     time: Res<Time>,
     mut timer: ResMut<ScenarioTimer>,
     mut timer_text: Query<&mut Text, With<TimerText>>,
@@ -220,6 +222,8 @@ pub fn scenario_update(
     mut next_animation_state: ResMut<NextState<AnimationState>>,
     scenarios_config: Res<ScenariosConfigRes>,
     scenario_index_state: Res<State<ScenarioIndexState>>,
+    audio_assets: Res<AudioAssetMap>,
+    mut scenario_entities: ResMut<ScenarioEntitiesRes>,
 ) {
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
@@ -237,6 +241,26 @@ pub fn scenario_update(
     // Update the timer text
     timer_text.single_mut().sections[0].value =
         format_timer_text(timer.remaining().max(Duration::from_secs(0)));
+
+    // Trigger the trolley approaching sound.
+    if time_remaining_reached(previous_time_remaining, current_time_remaining, 9.0) {
+        let trolley_approaching_audio = audio_assets.get_by_name("train-approaching");
+        let trolley_approaching_audio_entity = commands
+            .spawn((
+                AudioBundle {
+                    source: trolley_approaching_audio,
+                    settings: PlaybackSettings {
+                        mode: PlaybackMode::Once,
+                        volume: Volume::new(GAME_VOLUME),
+                        speed: 1.5,
+                        ..default()
+                    },
+                },
+                TrolleyApproachingAudio,
+            ))
+            .id();
+        scenario_entities.push(trolley_approaching_audio_entity);
+    }
 
     // Trigger the trolley to turn slightly
     if time_remaining_reached(previous_time_remaining, current_time_remaining, 3.0)
@@ -281,6 +305,7 @@ pub fn scenario_update(
 
 /// Handles click events in a scenario.
 pub fn scenario_handle_click(
+    mut commands: Commands,
     windows: Query<&Window, With<PrimaryWindow>>,
     lever_state: Res<State<LeverState>>,
     mut next_lever_state: ResMut<NextState<LeverState>>,
@@ -291,6 +316,7 @@ pub fn scenario_handle_click(
     scenarios_config: Res<ScenariosConfigRes>,
     scenario_index_state: Res<State<ScenarioIndexState>>,
     image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
 ) {
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
@@ -304,11 +330,21 @@ pub fn scenario_handle_click(
         .lever_switched_texture
         .as_ref()
         .map(|texture| image_assets.get_by_name(texture));
+    let switch_audio = audio_assets.get_by_name("switch");
 
     let lever_rect = Rect::new(346.0, 135.0, 410.0, 202.0);
 
     if let Some(mouse_pos) = windows.single().cursor_position() {
         if lever_rect.contains(mouse_pos) {
+            commands.spawn(AudioBundle {
+                source: switch_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    ..default()
+                },
+            });
+
             match lever_state.get() {
                 LeverState::Normal => {
                     if let Some(tracks_texture) = tracks_switched_texture {
@@ -401,6 +437,16 @@ fn goto_end_scenario(mut next_game_state: ResMut<NextState<GameState>>) {
         self.trolley_texture_override = Some(texture.into());
     }
 
+    /// Overrides the track A hostages scream sound.
+    pub fn override_hostages_a_scream_sound(&mut self, sound: impl Into<String>) {
+        self.hostages_a_scream_sound_override = Some(sound.into());
+    }
+
+    /// Overrides the track B hostages scream sound.
+    pub fn override_hostages_b_scream_sound(&mut self, sound: impl Into<String>) {
+        self.hostages_b_scream_sound_override = Some(sound.into());
+    }
+
     /// Configures a system to run when the scenario begins.
     pub fn on_start<M>(&mut self, system: impl IntoSystemConfigs<M>) {
         self.on_start = Some(system.into_configs());
@@ -449,6 +495,18 @@ pub struct Scenario {
     /// An optional override on the trolley texture.
     #[builder(default, via_mutators)]
     trolley_texture_override: Option<String>,
+    /// An optional override on the track A hostages scream sound.
+    #[builder(default, via_mutators)]
+    hostages_a_scream_sound_override: Option<String>,
+    /// An optional override on the track B hostages scream sound.
+    #[builder(default, via_mutators)]
+    hostages_b_scream_sound_override: Option<String>,
+    /// Whether to pause the music while the track A hostage scream plays.
+    #[builder(default, setter(strip_option))]
+    pause_music_during_hostages_a_scream: Option<f32>,
+    /// Whether to pause the music while the track B hostage scream plays.
+    #[builder(default, setter(strip_option))]
+    pause_music_during_hostages_b_scream: Option<f32>,
     /// The collection of scenario animations.
     #[builder(default, via_mutators)]
     animations: Vec<Animation>,
@@ -508,6 +566,14 @@ impl Plugin for ScenarioCollectionPlugin {
                             hostages_track_b_normal_texture: scenario
                                 .hostages_track_b_normal_texture,
                             trolley_texture_override: scenario.trolley_texture_override,
+                            hostages_a_scream_sound_override: scenario
+                                .hostages_a_scream_sound_override,
+                            hostages_b_scream_sound_override: scenario
+                                .hostages_b_scream_sound_override,
+                            pause_music_during_hostages_a_scream: scenario
+                                .pause_music_during_hostages_a_scream,
+                            pause_music_during_hostages_b_scream: scenario
+                                .pause_music_during_hostages_b_scream,
                         },
                         (
                             scenario.animations,
