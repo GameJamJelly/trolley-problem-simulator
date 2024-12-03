@@ -93,20 +93,33 @@ fn show_wounded_track_a(
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
 
-        let scream_audio_name = match &this_scenario.hostages_a_scream_sound_override {
-            Some(sound_name) => sound_name.clone(),
-            None => format!("scream-{}", (rand::random::<usize>() % 24) + 1),
-        };
-
-        let scream_audio = audio_assets.get_by_name(&scream_audio_name);
+        let squash_audio = audio_assets.get_by_name("squash");
         commands.spawn(AudioBundle {
-            source: scream_audio,
+            source: squash_audio,
             settings: PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 volume: Volume::new(GAME_VOLUME),
+                speed: 2.0,
                 ..default()
             },
         });
+
+        for _ in 0..this_scenario.num_hostages_track_a {
+            let scream_audio_name = match &this_scenario.hostages_a_scream_sound_override {
+                Some(sound_name) => sound_name.clone(),
+                None => format!("scream-{}", (rand::random::<usize>() % 24) + 1),
+            };
+
+            let scream_audio = audio_assets.get_by_name(&scream_audio_name);
+            commands.spawn(AudioBundle {
+                source: scream_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    ..default()
+                },
+            });
+        }
 
         if let Some(duration) = this_scenario.pause_music_during_hostages_a_scream {
             music.single().pause();
@@ -140,20 +153,33 @@ fn show_wounded_track_b(
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
 
-        let scream_audio_name = match &this_scenario.hostages_b_scream_sound_override {
-            Some(sound_name) => sound_name.clone(),
-            None => format!("scream-{}", (rand::random::<usize>() % 24) + 1),
-        };
-
-        let scream_audio = audio_assets.get_by_name(&scream_audio_name);
+        let squash_audio = audio_assets.get_by_name("squash");
         commands.spawn(AudioBundle {
-            source: scream_audio,
+            source: squash_audio,
             settings: PlaybackSettings {
                 mode: PlaybackMode::Despawn,
                 volume: Volume::new(GAME_VOLUME),
+                speed: 2.0,
                 ..default()
             },
         });
+
+        for _ in 0..this_scenario.num_hostages_track_b {
+            let scream_audio_name = match &this_scenario.hostages_b_scream_sound_override {
+                Some(sound_name) => sound_name.clone(),
+                None => format!("scream-{}", (rand::random::<usize>() % 24) + 1),
+            };
+
+            let scream_audio = audio_assets.get_by_name(&scream_audio_name);
+            commands.spawn(AudioBundle {
+                source: scream_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    ..default()
+                },
+            });
+        }
 
         if let Some(duration) = this_scenario.pause_music_during_hostages_b_scream {
             music.single().pause();
@@ -309,14 +335,29 @@ fn scenario_loan_forgiveness_start(
 
 /// Loan forgiveness update system.
 fn scenario_loan_forgiveness_update(
+    mut commands: Commands,
     time: Res<Time>,
     mut timer: ResMut<OtherHostagesTextureSwapTimerRes>,
     image_assets: Res<ImageAssetMap>,
+    audio_assets: Res<AudioAssetMap>,
     mut other_hostages_texture: Query<&mut Handle<Image>, With<OtherHostagesTexture>>,
 ) {
     if timer.tick(time.delta()).just_finished() {
         let other_hostages_wounded_texture = image_assets.get_by_name("age-hostage-10-wounded");
         *other_hostages_texture.single_mut() = other_hostages_wounded_texture;
+
+        for _ in 0..10 {
+            let scream_audio_name = format!("scream-{}", (rand::random::<usize>() % 24) + 1);
+            let scream_audio = audio_assets.get_by_name(&scream_audio_name);
+            commands.spawn(AudioBundle {
+                source: scream_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    ..default()
+                },
+            });
+        }
     }
 }
 
@@ -615,6 +656,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("original-hostage-5")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(1)
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .on_end(update_summary_original)
@@ -632,6 +675,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("age-hostage-10")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(10)
+            .num_hostages_track_b(1)
             .animation(standard_animation_track_a(Some("age-hostage-10-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .on_end(update_summary_age)
@@ -647,6 +692,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("original-lever-normal")
             .lever_switched_texture("original-lever-switched")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(0)
+            .num_hostages_track_b(1)
             .animation(standard_animation_track_a(None))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .on_end(update_summary_clone)
@@ -662,6 +709,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("original-lever-normal")
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("original-hostage-5")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(0)
             .animation(
                 Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
                     .on_lever_state(LeverState::Normal)
@@ -699,6 +748,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("original-hostage-5")
             .hostages_track_b_normal_texture("hat-hostage")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(1)
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("hat-hostage-wounded")))
             .on_end(update_summary_cool_hat)
@@ -714,6 +765,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("original-lever-normal")
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("victim")
+            .num_hostages_track_a(1)
+            .num_hostages_track_b(0)
             .animation(standard_animation_track_a(Some("victim-wounded")))
             .animation(standard_animation_track_b(None))
             .on_end(update_summary_victim)
@@ -731,6 +784,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("darwinism-hostage-1")
             .hostages_track_b_normal_texture("darwinism-hostage-5")
+            .num_hostages_track_a(1)
+            .num_hostages_track_b(5)
             .animation(standard_animation_track_a(Some("darwinism-hostage-1-wounded")))
             .animation(standard_animation_track_b(Some("darwinism-hostage-5-wounded")))
             .on_end(update_summary_darwinism)
@@ -748,6 +803,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("original-hostage-5")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(1)
             .animation(
                 Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
                     .on_lever_state(LeverState::Normal)
@@ -776,6 +833,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("original-hostage-5")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(1)
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .on_end(update_summary_professors)
@@ -791,6 +850,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("original-lever-normal")
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("original-hostage-5")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(0)
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(None))
             .on_start(scenario_loan_forgiveness_start)
@@ -810,6 +871,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("lobster-hostage-5")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(1)
+            .num_hostages_track_b(1)
             .override_hostages_a_scream_sound("blue-lobster")
             .pause_music_during_hostages_a_scream(5.5)
             .animation(standard_animation_track_a(Some("lobster-hostage-5-wounded")))
@@ -825,6 +888,8 @@ impl Plugin for GamePlugin {
             .tracks_switched_texture("shopping-cart-tracks-switched")
             .lever_normal_texture("original-lever-normal")
             .lever_switched_texture("original-lever-switched")
+            .num_hostages_track_a(0)
+            .num_hostages_track_b(0)
             .override_trolley_texture("shopping-cart")
             .animation(standard_animation_track_a(None))
             .animation(
@@ -846,6 +911,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("born-lever-puller-normal")
             .lever_switched_texture("born-lever-puller-switched")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(0)
+            .num_hostages_track_b(1)
             .animation(standard_animation_track_a(None))
             .animation(standard_animation_track_b(Some("original-hostage-1-wounded")))
             .on_end(update_summary_born_lever_puller)
@@ -861,6 +928,8 @@ impl Plugin for GamePlugin {
             .lever_normal_texture("original-lever-normal")
             .lever_switched_texture("original-lever-switched")
             .hostages_track_b_normal_texture("original-hostage-1")
+            .num_hostages_track_a(0)
+            .num_hostages_track_b(1)
             .animation(
                 Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM)
                     .on_lever_state(LeverState::Normal)
@@ -889,6 +958,8 @@ impl Plugin for GamePlugin {
             .tracks_normal_texture("self-one-track")
             .lever_normal_texture("self-standing")
             .hostages_track_a_normal_texture("original-hostage-5")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(0)
             .override_trolley_texture("thomas-the-tank-engine")
             .override_hostages_a_scream_sound("thomas-theme")
             .pause_music_during_hostages_a_scream(4.0)
@@ -925,6 +996,8 @@ impl Plugin for GamePlugin {
             .lever_switched_texture("original-lever-switched")
             .hostages_track_a_normal_texture("youtube-prank-youtubers")
             .hostages_track_b_normal_texture("youtube-prank-dummy")
+            .num_hostages_track_a(5)
+            .num_hostages_track_b(0)
             .animation(standard_animation_track_a(Some("youtube-prank-youtubers-wounded")))
             .animation(standard_animation_track_b(Some("youtube-prank-dummy-wounded")))
             .on_start(scenario_youtube_prank_start)
@@ -938,6 +1011,8 @@ impl Plugin for GamePlugin {
             .hostages_track_a_pos(STANDARD_HOSTAGES_POS_TRACK_A)
             .tracks_normal_texture("self-one-track")
             .lever_normal_texture("self-standing")
+            .num_hostages_track_a(0)
+            .num_hostages_track_b(0)
             .animation(Animation::new(APPROACHING_TROLLEY_SIDE_END_TRANSFORM).node(
                 AnimationNode::new(6.0, Transform::from_xyz(900.0, 445.0, 0.0)),
             ))

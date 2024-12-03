@@ -89,6 +89,10 @@ pub struct ScenarioConfig {
     pub hostages_track_a_normal_texture: Option<String>,
     /// The name of the track B hostages texture.
     pub hostages_track_b_normal_texture: Option<String>,
+    /// The number of hostages on track A.
+    pub num_hostages_track_a: usize,
+    /// The number of hostages on track B.
+    pub num_hostages_track_b: usize,
     /// The overridden trolley texture.
     pub trolley_texture_override: Option<String>,
     /// The overridden track A hostages scream sound.

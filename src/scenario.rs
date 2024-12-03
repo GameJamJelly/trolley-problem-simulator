@@ -492,6 +492,10 @@ pub struct Scenario {
     /// The name of the track B hostages texture.
     #[builder(default, setter(strip_option, into))]
     hostages_track_b_normal_texture: Option<String>,
+    /// The number of hostages on track A.
+    num_hostages_track_a: usize,
+    /// The number of hostages on track B.
+    num_hostages_track_b: usize,
     /// An optional override on the trolley texture.
     #[builder(default, via_mutators)]
     trolley_texture_override: Option<String>,
@@ -565,6 +569,8 @@ impl Plugin for ScenarioCollectionPlugin {
                                 .hostages_track_a_normal_texture,
                             hostages_track_b_normal_texture: scenario
                                 .hostages_track_b_normal_texture,
+                            num_hostages_track_a: scenario.num_hostages_track_a,
+                            num_hostages_track_b: scenario.num_hostages_track_b,
                             trolley_texture_override: scenario.trolley_texture_override,
                             hostages_a_scream_sound_override: scenario
                                 .hostages_a_scream_sound_override,
