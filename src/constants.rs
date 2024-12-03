@@ -64,3 +64,6 @@ pub const BULLET_POINT: char = '-';
 
 /// The audio volume.
 pub const GAME_VOLUME: f32 = 0.25;
+
+/// The transform for the cool asset.
+pub const COOL_HAT_TRANSFORM: Transform = Transform::from_xyz(383.0, 137.0, -5.0);

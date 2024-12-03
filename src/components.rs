@@ -57,3 +57,7 @@ pub struct GameMusic;
 /// The trolley approaching audio component.
 #[derive(Component)]
 pub struct TrolleyApproachingAudio;
+
+/// The cool hat texture component.
+#[derive(Component)]
+pub struct CoolHatTexture;

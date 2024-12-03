@@ -93,17 +93,6 @@ fn show_wounded_track_a(
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
 
-        let squash_audio = audio_assets.get_by_name("squash");
-        commands.spawn(AudioBundle {
-            source: squash_audio,
-            settings: PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                volume: Volume::new(GAME_VOLUME),
-                speed: 2.0,
-                ..default()
-            },
-        });
-
         for _ in 0..this_scenario.num_hostages_track_a {
             let scream_audio_name = match &this_scenario.hostages_a_scream_sound_override {
                 Some(sound_name) => sound_name.clone(),
@@ -128,6 +117,17 @@ fn show_wounded_track_a(
                 Duration::from_secs_f32(duration),
                 TimerMode::Once,
             )));
+        } else {
+            let squash_audio = audio_assets.get_by_name("squash");
+            commands.spawn(AudioBundle {
+                source: squash_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    speed: 2.0,
+                    ..default()
+                },
+            });
         }
     }
 }
@@ -153,17 +153,6 @@ fn show_wounded_track_b(
         let wounded_texture = image_assets.get_by_name(wounded_texture_name);
         *hostage_texture.single_mut() = wounded_texture;
 
-        let squash_audio = audio_assets.get_by_name("squash");
-        commands.spawn(AudioBundle {
-            source: squash_audio,
-            settings: PlaybackSettings {
-                mode: PlaybackMode::Despawn,
-                volume: Volume::new(GAME_VOLUME),
-                speed: 2.0,
-                ..default()
-            },
-        });
-
         for _ in 0..this_scenario.num_hostages_track_b {
             let scream_audio_name = match &this_scenario.hostages_b_scream_sound_override {
                 Some(sound_name) => sound_name.clone(),
@@ -188,6 +177,17 @@ fn show_wounded_track_b(
                 Duration::from_secs_f32(duration),
                 TimerMode::Once,
             )));
+        } else {
+            let squash_audio = audio_assets.get_by_name("squash");
+            commands.spawn(AudioBundle {
+                source: squash_audio,
+                settings: PlaybackSettings {
+                    mode: PlaybackMode::Despawn,
+                    volume: Volume::new(GAME_VOLUME),
+                    speed: 2.0,
+                    ..default()
+                },
+            });
         }
     }
 }
@@ -300,6 +300,13 @@ fn scenario_cliff_end(mut commands: Commands, entities: Res<ScenarioExtraEntitie
 
     // Remove the entities resource
     commands.remove_resource::<ScenarioExtraEntitiesRes>();
+}
+
+/// Cool hat end system.
+fn scenario_cool_hat_end(mut commands: Commands, lever_state: Res<State<LeverState>>) {
+    if !lever_state.pulled() {
+        commands.insert_resource(HatAcquiredRes);
+    }
 }
 
 /// Loan forgiveness start system.
@@ -544,6 +551,9 @@ fn scenario_youtube_prank_end(mut commands: Commands, entities: Res<ScenarioExtr
 
     // Remove the entities resource
     commands.remove_resource::<ScenarioExtraEntitiesRes>();
+
+    // Prevent the display of the cool hat texture
+    commands.remove_resource::<HatAcquiredRes>();
 }
 
 /// Self start system.
@@ -752,7 +762,7 @@ impl Plugin for GamePlugin {
             .num_hostages_track_b(1)
             .animation(standard_animation_track_a(Some("original-hostage-5-wounded")))
             .animation(standard_animation_track_b(Some("hat-hostage-wounded")))
-            .on_end(update_summary_cool_hat)
+            .on_end((scenario_cool_hat_end, update_summary_cool_hat))
             .build();
 
         // Victim

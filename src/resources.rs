@@ -308,3 +308,7 @@ impl GameSummary {
 /// A timer for pausing the game music.
 #[derive(Resource, Deref, DerefMut)]
 pub struct GameMusicPauseTimerRes(pub Timer);
+
+/// A marker resource indicating that the player has gotten the cool hat.
+#[derive(Resource)]
+pub struct HatAcquiredRes;

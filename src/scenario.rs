@@ -23,6 +23,7 @@ pub fn scenario_setup(
     image_assets: Res<ImageAssetMap>,
     trolley_front_texture: Res<TrolleyFrontRes>,
     mut next_lever_state: ResMut<NextState<LeverState>>,
+    hat_acquired: Option<Res<HatAcquiredRes>>,
 ) {
     let scenario_index = scenario_index_state.0.unwrap();
     let scenario = scenarios_config.get_scenario(scenario_index);
@@ -41,6 +42,7 @@ pub fn scenario_setup(
         .as_ref()
         .map(|texture| image_assets.get_by_name(texture));
     let trolley_texture = trolley_texture_override.unwrap_or_else(|| trolley_front_texture.clone());
+    let hat_texture = image_assets.get_by_name("hat");
     let duration = Duration::from_secs_f32(scenario.duration);
 
     // Reset the lever state
@@ -54,7 +56,7 @@ pub fn scenario_setup(
         commands
             .spawn((
                 SpriteBundle {
-                    texture: tracks_normal_texture.clone(),
+                    texture: tracks_normal_texture,
                     transform: Transform::from_xyz(0.0, 0.0, -20.0),
                     ..default()
                 },
@@ -68,7 +70,7 @@ pub fn scenario_setup(
         commands
             .spawn((
                 SpriteBundle {
-                    texture: lever_player_normal_texture.clone(),
+                    texture: lever_player_normal_texture,
                     transform: Transform::from_xyz(0.0, 0.0, -10.0),
                     ..default()
                 },
@@ -76,6 +78,22 @@ pub fn scenario_setup(
             ))
             .id(),
     );
+
+    // Spawn the cool hat texture
+    if hat_acquired.is_some() {
+        entities.push(
+            commands
+                .spawn((
+                    SpriteBundle {
+                        texture: hat_texture,
+                        transform: normalize_transform_to_canvas(COOL_HAT_TRANSFORM),
+                        ..default()
+                    },
+                    CoolHatTexture,
+                ))
+                .id(),
+        );
+    }
 
     // Spawn the texture for the hostages on track A
     if let Some(texture) = hostages_track_a_normal_texture {
