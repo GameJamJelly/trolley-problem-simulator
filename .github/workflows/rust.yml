@@ -48,6 +48,12 @@ jobs:
         run: cargo clippy --verbose -- -D warnings
 
       - name: Upload static files as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Upload static files as GitHub Pages artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3
         with:
@@ -78,10 +84,15 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
       - uses: yeslayla/butler-publish-itchio-action@v1.0.3
         env:
           BUTLER_CREDENTIALS: ${{ secrets.ITCH_IO_API_KEY }}
           CHANNEL: HTML
           ITCH_GAME: trolley-problem-simulator
           ITCH_USER: WKHAllen
-          PACKAGE: trolley-problem-simulator/dist
+          PACKAGE: dist
